@@ -1,4 +1,4 @@
-import { User, findOne } from '../models/user.js';
+import { User, findOne } from '../models/schemas/user.js';
 import pkg from 'jsonwebtoken';
 const { sign, verify } = pkg;
 import { isValidEmailFormat, sendVerificationEmail } from '../services/emailService.js';

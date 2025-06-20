@@ -1,6 +1,8 @@
-import { verify } from "jsonwebtoken";
+import pkg from 'jsonwebtoken';
+const { verify } = pkg;
 import asyncHandler from "express-async-handler";
-import { findById } from "./../models/user_model";
+import { User } from "../models/schemas/user.js";
+import CustomError from "../utils/customError.js";
 
 const protect = asyncHandler(async (req, res, next) => {
     let token;
@@ -11,7 +13,7 @@ const protect = asyncHandler(async (req, res, next) => {
 
         token = req.headers.authorization.split(" ")[1];
         const decodedToken = verify(token, process.env.SECRET_STR);
-        req.user = await findById(decodedToken.id).select("-password");
+        req.user = await User.findById(decodedToken.id).select("-password");
         next();
 
     }

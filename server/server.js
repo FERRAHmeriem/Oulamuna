@@ -3,6 +3,7 @@ import { config } from 'dotenv';
 import { createServer } from 'http';
 import { connect } from 'mongoose';
 import userRouter from "./routes/userRouter.js";
+import articleRouter from "./routes/articleRouter.js";
 import globalErrorHandler from "./controllers/errorController.js";
 import rateLimit from 'express-rate-limit';
 
@@ -27,14 +28,14 @@ const loginLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,  // 15 minutes
     max: 5,  // Limit each IP to 5 login requests per window
     message: 'Too many login attempts. Try again in 15 minutes.',
-    standardHeaders: true,  
-    legacyHeaders: false,  
+    standardHeaders: true,
+    legacyHeaders: false,
 });
 
 app.use('/api/users/login', loginLimiter);
 
 app.use('/api/users', userRouter);
-
+app.use('/api/articles', articleRouter);
 //GLOBAL ERROR HANDLER MIDDLEWARE
 app.use(globalErrorHandler)
 

@@ -46,7 +46,6 @@ const UserSchema = Schema({
     },
     userName: {
         type: String,
-
         unique: true,
         trim: true
     },
