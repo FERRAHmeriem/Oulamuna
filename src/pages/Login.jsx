@@ -1,14 +1,18 @@
 import React , { useState } from "react"
 import Header from "../components/Header"
 import image from "../assets/login_image.png"
+import { ToastContainer, toast } from 'react-toastify';
 function Login() {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Logique de connexion ici
-    console.log('Connexion:', { username, password });
+    if (!email || !password) {
+      toast.error("Veuillez remplir tous les champs !");
+      return;
+    }
+    console.log('Connexion:', { email, password });
   };
   return (
     <div className="flex flex-col gap-[2%] justify-start h-screen bg-[#1A3A34]">
@@ -26,10 +30,10 @@ function Login() {
         <div className="space-y-6">
           <div>
             <input 
-              type="text" 
-              placeholder="NOM D'UTILISATEUR" 
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              type="email" 
+              placeholder="ADDRESSE E-MAIL" 
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               className="w-[75%] px-4 py-3  border-2 border-[#1a3a34ab] rounded-sm placeholder-stone-600 text-stone-800 focus:outline-none focus:border-[#1A3A34] transition-colors"
             />
           </div>
@@ -56,6 +60,7 @@ function Login() {
         <img className="w-full" src={image} alt="image" />
       </div>
       </div>
+     <ToastContainer position="bottom-right" autoClose={3000} />
     </div>
 
   )
