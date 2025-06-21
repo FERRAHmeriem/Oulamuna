@@ -57,7 +57,6 @@ function Register() {
     };
 
     console.log("Infos soumises :", formData);
-    // ici tu peux appeler le backend avec formData
   };
 
   return (
