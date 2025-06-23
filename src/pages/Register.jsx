@@ -57,7 +57,6 @@ function Register() {
     };
 
     console.log("Infos soumises :", formData);
-    // ici tu peux appeler le backend avec formData
   };
 
   return (
@@ -68,7 +67,6 @@ function Register() {
           <img className="w-fit" src={loginImage} alt="image" />
         </div>
 
-        {/* Étape 1 */}
         <div className={counter === 0 ? 'px-32 basis-3/5' : 'hidden'}>
           <h1 className="text-4xl font-bold text-stone-800 mb-8 text-left">S'inscrire</h1>
           <p className="text-stone-700 text-left mb-12 leading-relaxed text-xl">Veuillez saisir vos informations personnelles.</p>
@@ -116,7 +114,6 @@ function Register() {
           </div>
         </div>
 
-        {/* Étape 2 */}
         <div className={counter === 1 ? 'px-32 basis-3/5' : 'hidden'}>
           <h1 className="text-4xl font-bold text-stone-800 mb-8 text-left">S'inscrire</h1>
           <p className="text-stone-700 text-left mb-12 text-xl">Veuillez saisir vos informations démographiques.</p>
@@ -167,7 +164,6 @@ function Register() {
           </div>
         </div>
 
-        {/* Étape 3 */}
         <div className={counter === 2 ? 'px-32 basis-3/5' : 'hidden'}>
           <h1 className="text-4xl font-bold text-stone-800 mb-8 text-left">S'inscrire</h1>
           <p className="text-stone-700 text-left mb-12 text-xl">Veuillez sélectionner votre photo de profile</p>
@@ -191,7 +187,7 @@ function Register() {
               onClick={handleSubmit}
               className="w-[75%] py-3 bg-[#274a43fd] text-white rounded-sm"
             >
-              Confirmer
+              CONFIRMER
             </button>
           </div>
         </div>
