@@ -1,5 +1,6 @@
 import asyncHandler from 'express-async-handler';
 import Article from '../../models/schemas/article.js';
+import Scholar from '../../models/schemas/scholar.js';
 
 
 // =============  ADMIN CONTROLLER METHODS =============
@@ -24,6 +25,7 @@ export const approveArticle = asyncHandler(async (req, res, next) => {
         });
     }
 
+    // Approuver l'article
     article.status = 'approved';
     article.publishedAt = new Date();
     article.adminReview = {
@@ -33,6 +35,26 @@ export const approveArticle = asyncHandler(async (req, res, next) => {
     };
 
     await article.save();
+
+    // Incrémenter le nombre d'articles du savant
+    let scholar = null;
+       console.log('Scholar:', article.scholar);
+    
+    if (article.scholar) {
+        // Si l'article a une référence ObjectId vers le savant
+        scholar = await Scholar.findById(article.scholar);
+    } else if (article.scholarName) {
+        // Si l'article a seulement le nom du savant
+        scholar = await Scholar.findOne({ 
+            name: article.scholarName,
+            status: 'approved' 
+        });
+    }
+ 
+    if (scholar) {
+        await scholar.incrementArticleCount();
+    }
+
     await article.populate('author', 'firstName familyName userName email');
 
     res.status(200).json({

@@ -13,6 +13,7 @@ import {
     searchByEpoque,
     searchByYear,
     advancedSearch,
+    searchArticlesByScholar
 } from '../controllers/articles/searchController.js';
 import {
     getAuthorStats,
@@ -46,6 +47,8 @@ router.get('/search/epoque/:epoque', searchByEpoque); // done
 
 // Recherche par année de publication
 router.get('/search/year/:year', searchByYear); // done
+// Recherche par nom de savant (auteur)
+router.get('/search/scholar/:scholarName', searchArticlesByScholar); // 
 
 // Recherche stage el wa7ch (tous les filtres combinés)
 router.get('/search/advanced', advancedSearch); // done

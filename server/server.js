@@ -4,6 +4,7 @@ import { createServer } from 'http';
 import { connect } from 'mongoose';
 import userRouter from "./routes/userRouter.js";
 import articleRouter from "./routes/articleRouter.js";
+import scholarRouter from "./routes/scholarRouter.js";
 import globalErrorHandler from "./controllers/errorController.js";
 import rateLimit from 'express-rate-limit';
 
@@ -36,6 +37,7 @@ app.use('/api/users/login', loginLimiter);
 
 app.use('/api/users', userRouter);
 app.use('/api/articles', articleRouter);
+app.use('/api/scholars', scholarRouter)
 //GLOBAL ERROR HANDLER MIDDLEWARE
 app.use(globalErrorHandler)
 

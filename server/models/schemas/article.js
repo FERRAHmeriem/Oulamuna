@@ -2,11 +2,11 @@ import mongoose from 'mongoose';
 import { Schema, model } from 'mongoose';
 import commentSchema from './comment.js';
 import sectionSchema from './section.js';
-import { 
-    EPOQUES, 
-    LANGUAGES, 
-    DOMAINS_EXPERTISE, 
-    ARTICLE_STATUS 
+import {
+    EPOQUES,
+    LANGUAGES,
+    DOMAINS_EXPERTISE,
+    ARTICLE_STATUS
 } from '../constants/articleConstants.js';
 import { validateImageUrl, validatePdfUrl } from '../validators/urlValidators.js';
 import { instanceMethods, staticMethods } from '../methods/articleMethods.js';
@@ -23,7 +23,7 @@ const articleSchema = new Schema({
         minLength: [5, 'Le titre doit contenir au moins 5 caractères'],
         maxLength: [200, 'Le titre ne peut pas dépasser 200 caractères']
     },
-    
+
     description: {
         type: String,
         required: [true, 'La description est requise'],
@@ -31,14 +31,36 @@ const articleSchema = new Schema({
         minLength: [20, 'La description doit contenir au moins 20 caractères'],
         maxLength: [1000, 'La description ne peut pas dépasser 1000 caractères']
     },
-    
+
     scholarName: {
         type: String,
-        required: [true, 'Le nom du savant est requis'],
+        required: function () {
+            // Requis seulement si pas de référence scholar
+            return !this.scholar;
+        },
         trim: true,
         maxLength: [100, 'Le nom du savant ne peut pas dépasser 100 caractères']
     },
-    
+
+    // Nouveau champ à ajouter :
+    scholar: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Scholar',
+        required: function () {
+            // Requis seulement si pas de nom de savant
+            return !this.scholarName;
+        },
+        validate: {
+            validator: async function (scholarId) {
+                if (!scholarId) return true; // Optionnel
+                const Scholar = mongoose.model('Scholar');
+                const scholar = await Scholar.findById(scholarId);
+                return scholar && scholar.status === 'approved';
+            },
+            message: 'Le savant sélectionné doit être approuvé'
+        }
+    },
+
     epoque: {
         type: String,
         required: [true, 'L\'époque est requise'],
@@ -47,7 +69,7 @@ const articleSchema = new Schema({
             message: 'Veuillez sélectionner une époque valide'
         }
     },
-    
+
     articleLanguage: {
         type: String,
         required: [true, 'La langue est requise'],
@@ -56,7 +78,7 @@ const articleSchema = new Schema({
             message: 'Veuillez sélectionner une langue valide'
         }
     },
-    
+
     domaineExpertise: {
         type: String,
         required: [true, 'Le domaine d\'expertise est requis'],
@@ -65,7 +87,7 @@ const articleSchema = new Schema({
             message: 'Veuillez sélectionner un domaine d\'expertise valide'
         }
     },
-    
+
     imageArticle: {
         url: {
             type: String,
@@ -76,9 +98,9 @@ const articleSchema = new Schema({
             }
         },
     },
-    
+
     sections: [sectionSchema],
-    
+
     pdfFiles: [{
         url: {
             type: String,
@@ -89,13 +111,13 @@ const articleSchema = new Schema({
             }
         },
     }],
-    
+
     author: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: [true, 'L\'auteur de l\'article est requis']
     },
-    
+
     status: {
         type: String,
         enum: {
@@ -104,7 +126,7 @@ const articleSchema = new Schema({
         },
         default: 'draft'
     },
-    
+
     adminReview: {
         reviewedBy: {
             type: mongoose.Schema.Types.ObjectId,
@@ -120,18 +142,18 @@ const articleSchema = new Schema({
             maxLength: [500, 'La raison du rejet ne peut pas dépasser 500 caractères']
         }
     },
-    
+
     publishedAt: {
         type: Date,
         default: null
     },
-    
+
     viewCount: {
         type: Number,
         default: 0,
         min: 0
     },
-    
+
     likes: [{
         user: {
             type: mongoose.Schema.Types.ObjectId,
@@ -142,14 +164,14 @@ const articleSchema = new Schema({
             default: Date.now
         }
     }],
-    
+
     comments: [commentSchema],
-    
+
     featured: {
         type: Boolean,
         default: false
     },
-    
+
     readingTime: {
         type: Number, // en minutes
         min: 1

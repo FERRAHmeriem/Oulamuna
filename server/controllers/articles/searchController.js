@@ -1,5 +1,6 @@
 import asyncHandler from 'express-async-handler';
 import Article from '../../models/schemas/article.js';
+import Scholar from '../../models/schemas/scholar.js';
 
 // ============= SEARCH BY DOMAIN OF EXPERTISE =============
 export const searchByDomain = asyncHandler(async (req, res, next) => {
@@ -155,13 +156,75 @@ export const searchByYear = asyncHandler(async (req, res, next) => {
     });
 });
 
-// ============= ADVANCED SEARCH =============
+// ============= SEARCH ARTICLES BY SCHOLAR NAME ============= // not done
+export const searchArticlesByScholar = asyncHandler(async (req, res, next) => {
+    const { scholarName } = req.params;
+    const {
+        page = 1,
+        limit = 10,
+        sortBy = 'publishedAt',
+        sortOrder = 'desc'
+    } = req.query;
+
+    // Vérifier que le nom du savant est fourni
+    if (!scholarName || scholarName.trim() === '') {
+        return next(new CustomError('Nom du savant requis', 400));
+    }
+
+    // Rechercher le savant par nom (recherche flexible)
+    const scholar = await Scholar.findOne({
+        name: { $regex: scholarName.trim(), $options: 'i' },
+        status: 'approved'
+    });
+
+    if (!scholar) {
+        return next(new CustomError('Savant non trouvé ou non accessible', 404));
+    }
+
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const sortOptions = {};
+    sortOptions[sortBy] = sortOrder === 'desc' ? -1 : 1;
+
+    const articles = await Article.find({
+        scholar: scholar._id,
+        status: 'approved'
+    })
+        .populate('author', 'firstName familyName userName profilePicture')
+        .sort(sortOptions)
+        .limit(parseInt(limit))
+        .skip(skip);
+
+    const total = await Article.countDocuments({
+        scholar: scholar._id,
+        status: 'approved'
+    });
+
+    const totalPages = Math.ceil(total / parseInt(limit));
+
+    res.status(200).json({
+        success: true,
+        data: {
+            scholar,
+            articles,
+            pagination: {
+                currentPage: parseInt(page),
+                totalPages,
+                totalItems: total,
+                itemsPerPage: parseInt(limit),
+                hasNextPage: parseInt(page) < totalPages,
+                hasPrevPage: parseInt(page) > 1
+            }
+        }
+    });
+});
+// ============= ADVANCED SEARCH ============= // to review
 export const advancedSearch = asyncHandler(async (req, res, next) => {
     const {
         domaine,
         language,
         epoque,
         year,
+        scholarName,
         page = 1,
         limit = 10,
         sortBy = 'createdAt',
@@ -186,6 +249,34 @@ export const advancedSearch = asyncHandler(async (req, res, next) => {
         };
     }
 
+    // Filtre par nom de savant
+    if (scholarName && scholarName.trim() !== '') {
+        // Rechercher d'abord le(s) savant(s) correspondant(s)
+        const scholars = await Scholar.find({
+            name: { $regex: scholarName.trim(), $options: 'i' },
+            status: 'approved'
+        }).select('_id');
+
+        if (scholars.length > 0) {
+            const scholarIds = scholars.map(scholar => scholar._id);
+            query.scholar = { $in: scholarIds };
+        } else {
+            // Aucun savant trouvé, retourner des résultats vides
+            return res.status(200).json({
+                success: true,
+                data: [],
+                pagination: {
+                    currentPage: parseInt(page),
+                    totalPages: 0,
+                    totalItems: 0,
+                    itemsPerPage: parseInt(limit)
+                },
+                searchCriteria: { domaine, language, epoque, year, scholarName },
+                message: 'Aucun savant trouvé avec ce nom'
+            });
+        }
+    }
+
     const sortOptions = {};
     sortOptions[sortBy] = sortOrder === 'desc' ? -1 : 1;
 
@@ -206,6 +297,6 @@ export const advancedSearch = asyncHandler(async (req, res, next) => {
             totalItems: total,
             itemsPerPage: parseInt(limit)
         },
-        searchCriteria: { domaine, language, epoque, year }
+        searchCriteria: { domaine, language, epoque, year, scholarName }
     });
 });
