@@ -12,6 +12,7 @@ import {
 } from '../controllers/scholarController.js';
 import protect from '../middlewares/auth.js';
 import roleMiddleware from '../middlewares/role.js';
+import { upload } from '../config/multer.js';
 
 const router = express.Router();
 
@@ -27,7 +28,7 @@ router.get('/:id', getScholar); //done
 
 // ============= PROTECTED ROUTES (USER) =============
 // Submit a new scholar request
-router.post('/submit-scholar', protect, submitScholarRequest); //done
+router.post('/submit-scholar', protect, upload.single('picture'), submitScholarRequest); //done
 
 // Get user's own scholar requests
 router.get('/user/requests', protect, getUserScholarRequests); // not gonna test this now

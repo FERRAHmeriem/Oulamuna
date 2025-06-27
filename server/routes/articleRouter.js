@@ -1,5 +1,6 @@
 import { body, param, query } from 'express-validator';
 import { Router } from 'express';
+import { articleUploadCustom } from '../middlewares/uploadMiddleware.js';
 const router = Router();
 import {
     createArticle,
@@ -66,8 +67,9 @@ router.get('/author/:authorId/most-viewed', protect, getAuthorMostViewed); // 5-
 // Tous les articles d'un auteur triés par vues (public)
 router.get('/author/:authorId/all-by-views', protect, getAllAuthorArticlesByViews); //6- done
 
+
 // Créer un nouvel article
-router.post('/create', protect, createArticle);  // 1- done 
+router.post('/create', protect, articleUploadCustom, createArticle);  // 1- done 
 
 // Mettre à jour un article
 router.put('/update/:id', protect, updateArticle); // 2- done

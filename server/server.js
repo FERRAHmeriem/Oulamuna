@@ -7,6 +7,8 @@ import articleRouter from "./routes/articleRouter.js";
 import scholarRouter from "./routes/scholarRouter.js";
 import globalErrorHandler from "./controllers/errorController.js";
 import rateLimit from 'express-rate-limit';
+import { upload } from './config/multer.js';
+import uploadRouter from './routes/uploadRouter.js';
 
 
 const app = express();
@@ -38,6 +40,7 @@ app.use('/api/users/login', loginLimiter);
 app.use('/api/users', userRouter);
 app.use('/api/articles', articleRouter);
 app.use('/api/scholars', scholarRouter)
+app.use('/api/uploads', uploadRouter); 
 //GLOBAL ERROR HANDLER MIDDLEWARE
 app.use(globalErrorHandler)
 

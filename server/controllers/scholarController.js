@@ -2,6 +2,7 @@ import asyncHandler from 'express-async-handler';
 import Scholar from '../models/schemas/scholar.js';
 import { validationResult } from 'express-validator';
 import CustomError from '../utils/customError.js';
+import { deleteFile, generateFileUrl } from '../utils/fileUtils.js';
 
 // ============= SUBMIT SCHOLAR REQUEST =============
 export const submitScholarRequest = asyncHandler(async (req, res, next) => {
@@ -11,7 +12,7 @@ export const submitScholarRequest = asyncHandler(async (req, res, next) => {
         return next(new CustomError('Erreurs de validation', 400));
     }
 
-    const { name, picture, epoque, domaineExpertise, biography } = req.body;
+    const { name, epoque, domaineExpertise } = req.body;
 
     // Vérifier si un savant avec le même nom existe déjà
     const existingScholar = await Scholar.findOne({ 
@@ -22,26 +23,40 @@ export const submitScholarRequest = asyncHandler(async (req, res, next) => {
         return next(new CustomError('Un savant avec ce nom existe déjà', 400));
     }
 
+    // Handle picture upload
+    let pictureUrl = null;
+    if (req.file) {
+        // Generate the file URL using the uploaded file's filename
+        pictureUrl = generateFileUrl(req.file.filename, req);
+    }
+
     // Créer la demande de savant
     const scholar = new Scholar({
         name,
-        picture,
+        picture: pictureUrl,
         epoque,
         domaineExpertise,
         submittedBy: req.user._id,
         status: 'pending'
     });
 
-    const savedScholar = await scholar.save();
-    await savedScholar.populate('submittedBy', 'firstName familyName userName email');
+    try {
+        const savedScholar = await scholar.save();
+        await savedScholar.populate('submittedBy', 'firstName familyName userName email');
 
-    res.status(201).json({
-        success: true,
-        message: 'Demande de savant soumise avec succès',
-        data: savedScholar
-    });
+        res.status(201).json({
+            success: true,
+            message: 'Demande de savant soumise avec succès',
+            data: savedScholar
+        });
+    } catch (error) {
+        // If scholar creation fails, delete the uploaded file
+        if (req.file) {
+            deleteFile(req.file.filename);
+        }
+        throw error;
+    }
 });
-
 // ============= GET ALL APPROVED SCHOLARS =============
 export const getApprovedScholars = asyncHandler(async (req, res) => {
     const {

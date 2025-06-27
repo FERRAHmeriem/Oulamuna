@@ -4,6 +4,7 @@ const { sign, verify } = pkg;
 import { isValidEmailFormat, sendVerificationEmail } from '../services/emailService.js';
 import asyncHandler from 'express-async-handler';
 import CustomError from '../utils/customError.js';
+import { deleteFile, generateFileUrl } from '../utils/fileUtils.js';
 
 
 // JWT token generation function
@@ -143,21 +144,47 @@ export const signupStepTwo = asyncHandler(async (req, res, next) => {
     res.status(200).json({ message: 'Step two completed' });
 
 })
-
 export const signupStepThree = asyncHandler(async (req, res, next) => {
-    const { userId, profileImage } = req.body;
-    const user = await User.findOneAndUpdate(
-        { _id: userId },
-        { $set: { profileImage } },
-        { new: true }
-    );
-    if (!user) {
+    const { userId } = req.body;
+    
+    // Check if user exists
+    const existingUser = await User.findById(userId);
+    if (!existingUser) {
+        // Clean up uploaded file if user not found
+        if (req.file) {
+            deleteFile(req.file.filename);
+        }
         return next(new CustomError('User not found!', 404));
     }
 
-    res.status(200).json({ message: 'Step three completed' });
+    let updateData = {};
+    
+    // If profile image was uploaded via Multer
+    if (req.file) {
+        // Delete old profile image if it exists and is not default
+        if (existingUser.profileImage && 
+            existingUser.profileImage !== 'default-profile.png' && 
+            !existingUser.profileImage.includes('default-profile.png')) {
+            deleteFile(existingUser.profileImage);
+        }
+        
+        // Generate full URL for the uploaded image
+        updateData.profileImage = generateFileUrl(req.file.filename, req);
+    }
+    
+    // Update user with new profile image
+    const user = await User.findOneAndUpdate(
+        { _id: userId },
+        { $set: updateData },
+        { new: true }
+    );
 
-})
+    res.status(200).json({ 
+        message: 'Step three completed',
+        profileImage: user.profileImage // Return the full URL
+    });
+});
+
 
 export const signupStepFour = asyncHandler(async (req, res) => {
     const { userId, userName } = req.body;

@@ -1,31 +1,124 @@
 import asyncHandler from 'express-async-handler';
 import Article from '../../models/schemas/article.js';
-import Scholar from '../../models/schemas/scholar.js'; // ADD THIS IMPORT
+import Scholar from '../../models/schemas/scholar.js'; 
 import { validationResult } from 'express-validator';
 import CustomError from '../../utils/customError.js';
+import { deleteFile, generateFileUrl } from '../../utils/fileUtils.js';
 
 // ============= CREATE ARTICLE (MODIFIED) =============
 export const createArticle = asyncHandler(async (req, res, next) => {
-    // Validation des erreurs
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         return next(new CustomError('Erreurs de validation', 400));
     }
-
     const {
         title,
         description,
-        scholarName, // For backward compatibility
-        scholar, // New field for Scholar reference
+        scholarName,
+        scholar,
         epoque,
         articleLanguage,
-        domaineExpertise,
-        imageArticle,
-        sections,
-        pdfFiles
+        domaineExpertise
     } = req.body;
+    let imageArticle = null;
+    const mainImageFile = req.organizedFiles?.imageArticle?.[0] || 
+                         req.organizedFiles?.['imageArticle.url']?.[0] ||
+                         req.files?.find(f => f.fieldname === 'imageArticle' || f.fieldname === 'imageArticle.url');
+    
+    if (mainImageFile) {
+        imageArticle = {
+            url: generateFileUrl(mainImageFile.filename, req)
+        };
+    } else {
+        return next(new CustomError('L\'image principale de l\'article est requise', 400));
+    }
+    let pdfFiles = [];
+    
+    // First, try to get PDFs from file uploads
+    const pdfFilesList = req.organizedFiles?.pdfFiles || 
+                        req.organizedFiles?.['pdfFiles.url'] ||
+                        req.files?.filter(f => f.fieldname.includes('pdfFiles')) || [];
+    
+    if (pdfFilesList.length > 0) {
+        pdfFiles = pdfFilesList.map(file => ({
+            url: generateFileUrl(file.filename, req)
+        }));
+    }
+    const pdfIndexes = new Set();
+    Object.keys(req.body).forEach(key => {
+        const match = key.match(/^pdfFiles\[(\d+)\]/);
+        if (match) {
+            pdfIndexes.add(parseInt(match[1]));
+        }
+    });
+    
+    // Add PDFs from form field indexes if any
+    Array.from(pdfIndexes).sort().forEach(index => {
+        const pdfFieldName = `pdfFiles[${index}].url` || `pdfFiles[${index}][url]`;
+        const pdfFiles_upload = req.files?.filter(f => 
+            f.fieldname === pdfFieldName || 
+            f.fieldname === `pdfFiles[${index}]`
+        ) || [];
+        
+        pdfFiles_upload.forEach(file => {
+            pdfFiles.push({
+                url: generateFileUrl(file.filename, req)
+            });
+        });
+    });
+    let sections = [];
+    const sectionIndexes = new Set();
+    
+    // Find all section indexes from the request body
+    Object.keys(req.body).forEach(key => {
+        const match = key.match(/^sections\[(\d+)\]/);
+        if (match) {
+            sectionIndexes.add(parseInt(match[1]));
+        }
+    });
+    
+    // Build sections array from form fields
+    Array.from(sectionIndexes).sort().forEach(index => {
+        const section = {
+            title: req.body[`sections[${index}].title`] || req.body[`sections[${index}][title]`],
+            content: req.body[`sections[${index}].content`] || req.body[`sections[${index}][content]`],
+            order: parseInt(req.body[`sections[${index}].order`] || req.body[`sections[${index}][order]`] || index + 1),
+            pictures: []
+        };
+        
+        // Handle pictures for this section
+        if (req.organizedFiles || req.files) {
+            const pictureFields = Object.keys(req.organizedFiles || {}).filter(key => 
+                key.includes(`sections[${index}]`) && key.includes('pictures')
+            );
+            
+            pictureFields.forEach(fieldName => {
+                const files = req.organizedFiles[fieldName] || [];
+                files.forEach(file => {
+                    section.pictures.push({
+                        url: generateFileUrl(file.filename, req)
+                    });
+                });
+            });
+        
+            if (!req.organizedFiles && req.files) {
+                const sectionPictureFiles = req.files.filter(file => 
+                    file.fieldname.includes(`sections[${index}]`) && 
+                    file.fieldname.includes('pictures')
+                );
+                
+                sectionPictureFiles.forEach(file => {
+                    section.pictures.push({
+                        url: generateFileUrl(file.filename, req)
+                    });
+                });
+            }
+        }
+        
+        sections.push(section);
+    });
 
-    // Créer l'article - initial data structure
+    // Article data structure
     const articleData = {
         title,
         description,
@@ -38,9 +131,7 @@ export const createArticle = asyncHandler(async (req, res, next) => {
         author: req.user._id,
         status: 'draft'
     };
-
     if (scholar) {
-        // If using new Scholar system
         const scholarDoc = await Scholar.findById(scholar);
         if (!scholarDoc) {
             return next(new CustomError('Savant non trouvé', 404));
@@ -48,16 +139,13 @@ export const createArticle = asyncHandler(async (req, res, next) => {
         if (scholarDoc.status !== 'approved') {
             return next(new CustomError('Le savant doit être approuvé avant de pouvoir écrire des articles', 400));
         }
-        // Ensure consistency
         if (epoque !== scholarDoc.epoque || domaineExpertise !== scholarDoc.domaineExpertise) {
             return next(new CustomError('L\'époque et le domaine d\'expertise doivent correspondre au savant sélectionné', 400));
         }
 
-        // Set scholar reference
         articleData.scholar = scholar;
         articleData.scholarName = scholarDoc.name;
     } else if (scholarName) {
-        // Validate that the scholarName exists among approved scholars
         const existingScholar = await Scholar.findOne({
             name: scholarName,
             status: 'approved'
@@ -67,27 +155,38 @@ export const createArticle = asyncHandler(async (req, res, next) => {
             return next(new CustomError('Le nom du savant fourni n\'existe pas parmi les savants approuvés', 400));
         }
 
-        // Set both the scholar reference and scholarName
         articleData.scholar = existingScholar._id;
         articleData.scholarName = scholarName;
     } else {
         return next(new CustomError('Vous devez soit sélectionner un savant approuvé, soit saisir un nom de savant', 400));
     }
 
-    const article = new Article(articleData);
-    const savedArticle = await article.save();
+    try {
+        const article = new Article(articleData);
+        const savedArticle = await article.save();
 
-    await savedArticle.populate([
-        { path: 'author', select: 'firstName familyName userName email' },
-        { path: 'scholar', select: 'name epoque domaineExpertise picture' }
-    ]);
+        await savedArticle.populate([
+            { path: 'author', select: 'firstName familyName userName email' },
+            { path: 'scholar', select: 'name epoque domaineExpertise picture status articlesCount createdAt approvedAt' }
+        ]);
 
-    res.status(201).json({
-        success: true,
-        message: 'Article créé avec succès',
-        data: savedArticle
-    });
+        res.status(201).json({
+            success: true,
+            message: 'Article créé avec succès',
+            data: savedArticle
+        });
+    } catch (error) {
+        if (mainImageFile) deleteFile(mainImageFile.filename);
+        if (req.files?.pdfFiles) {
+            req.files.pdfFiles.forEach(file => deleteFile(file.filename));
+        }
+        if (req.files?.pictures) {
+            req.files.pictures.forEach(file => deleteFile(file.filename));
+        }
+        throw error;
+    }
 });
+
 
 // ============= UPDATE ARTICLE (MODIFIED) =============
 export const updateArticle = asyncHandler(async (req, res, next) => {
@@ -156,7 +255,7 @@ export const updateArticle = asyncHandler(async (req, res, next) => {
         { new: true, runValidators: true }
     ).populate([
         { path: 'author', select: 'firstName familyName userName email' },
-        { path: 'scholar', select: 'name epoque domaineExpertise picture' }
+        { path: 'scholar', select: 'name epoque domaineExpertise picture status articlesCount createdAt approvedAt' }
     ]);
 
     res.status(200).json({

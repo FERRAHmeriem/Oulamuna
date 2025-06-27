@@ -217,7 +217,7 @@ export const searchArticlesByScholar = asyncHandler(async (req, res, next) => {
         }
     });
 });
-// ============= ADVANCED SEARCH ============= // to review
+// ============= ADVANCED SEARCH =============
 export const advancedSearch = asyncHandler(async (req, res, next) => {
     const {
         domaine,
