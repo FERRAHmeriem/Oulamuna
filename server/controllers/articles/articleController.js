@@ -1,6 +1,6 @@
 import asyncHandler from 'express-async-handler';
 import Article from '../../models/schemas/article.js';
-import Scholar from '../../models/schemas/scholar.js'; 
+import Scholar from '../../models/schemas/scholar.js';
 import { validationResult } from 'express-validator';
 import CustomError from '../../utils/customError.js';
 import { deleteFile, generateFileUrl } from '../../utils/fileUtils.js';
@@ -27,7 +27,7 @@ export const createArticle = asyncHandler(async (req, res, next) => {
     
     if (mainImageFile) {
         imageArticle = {
-            url: generateFileUrl(mainImageFile.filename, req)
+            url: mainImageFile.filename
         };
     } else {
         return next(new CustomError('L\'image principale de l\'article est requise', 400));
@@ -41,7 +41,7 @@ export const createArticle = asyncHandler(async (req, res, next) => {
     
     if (pdfFilesList.length > 0) {
         pdfFiles = pdfFilesList.map(file => ({
-            url: generateFileUrl(file.filename, req)
+            url: file.filename
         }));
     }
     const pdfIndexes = new Set();
@@ -62,7 +62,7 @@ export const createArticle = asyncHandler(async (req, res, next) => {
         
         pdfFiles_upload.forEach(file => {
             pdfFiles.push({
-                url: generateFileUrl(file.filename, req)
+                url: file.filename
             });
         });
     });
@@ -83,10 +83,11 @@ export const createArticle = asyncHandler(async (req, res, next) => {
             title: req.body[`sections[${index}].title`] || req.body[`sections[${index}][title]`],
             content: req.body[`sections[${index}].content`] || req.body[`sections[${index}][content]`],
             order: parseInt(req.body[`sections[${index}].order`] || req.body[`sections[${index}][order]`] || index + 1),
-            pictures: []
+            pictures: [],
+            videos: []
         };
         
-        // Handle pictures for this section
+        // Handle pictures for this section (unchanged)
         if (req.organizedFiles || req.files) {
             const pictureFields = Object.keys(req.organizedFiles || {}).filter(key => 
                 key.includes(`sections[${index}]`) && key.includes('pictures')
@@ -96,7 +97,7 @@ export const createArticle = asyncHandler(async (req, res, next) => {
                 const files = req.organizedFiles[fieldName] || [];
                 files.forEach(file => {
                     section.pictures.push({
-                        url: generateFileUrl(file.filename, req)
+                        url: file.filename
                     });
                 });
             });
@@ -109,7 +110,36 @@ export const createArticle = asyncHandler(async (req, res, next) => {
                 
                 sectionPictureFiles.forEach(file => {
                     section.pictures.push({
-                        url: generateFileUrl(file.filename, req)
+                        url: file.filename
+                    });
+                });
+            }
+        }
+        
+        // Handle videos for this section (new)
+        if (req.organizedFiles || req.files) {
+            const videoFields = Object.keys(req.organizedFiles || {}).filter(key => 
+                key.includes(`sections[${index}]`) && key.includes('videos')
+            );
+            
+            videoFields.forEach(fieldName => {
+                const files = req.organizedFiles[fieldName] || [];
+                files.forEach(file => {
+                    section.videos.push({
+                        url: file.filename
+                    });
+                });
+            });
+        
+            if (!req.organizedFiles && req.files) {
+                const sectionVideoFiles = req.files.filter(file => 
+                    file.fieldname.includes(`sections[${index}]`) && 
+                    file.fieldname.includes('videos')
+                );
+                
+                sectionVideoFiles.forEach(file => {
+                    section.videos.push({
+                        url: file.filename
                     });
                 });
             }
@@ -176,6 +206,7 @@ export const createArticle = asyncHandler(async (req, res, next) => {
             data: savedArticle
         });
     } catch (error) {
+        // Clean up uploaded files on error
         if (mainImageFile) deleteFile(mainImageFile.filename);
         if (req.files?.pdfFiles) {
             req.files.pdfFiles.forEach(file => deleteFile(file.filename));
@@ -183,10 +214,13 @@ export const createArticle = asyncHandler(async (req, res, next) => {
         if (req.files?.pictures) {
             req.files.pictures.forEach(file => deleteFile(file.filename));
         }
+        // Clean up video files on error
+        if (req.files?.videos) {
+            req.files.videos.forEach(file => deleteFile(file.filename));
+        }
         throw error;
     }
 });
-
 
 // ============= UPDATE ARTICLE (MODIFIED) =============
 export const updateArticle = asyncHandler(async (req, res, next) => {
@@ -271,10 +305,10 @@ export const getArticle = asyncHandler(async (req, res, next) => {
 
     const article = await Article.findById(id)
         .populate('author', 'firstName familyName userName email profilePicture')
-        .populate({ 
-            path: 'scholar', 
+        .populate({
+            path: 'scholar',
             select: 'name epoque domaineExpertise picture status articlesCount createdAt approvedAt',
-            options: { virtuals: true } 
+            options: { virtuals: true }
         })
         .populate('comments.author', 'firstName familyName userName profilePicture')
         .populate('likes.user', 'firstName familyName userName')

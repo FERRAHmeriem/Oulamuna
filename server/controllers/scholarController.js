@@ -27,7 +27,7 @@ export const submitScholarRequest = asyncHandler(async (req, res, next) => {
     let pictureUrl = null;
     if (req.file) {
         // Generate the file URL using the uploaded file's filename
-        pictureUrl = generateFileUrl(req.file.filename, req);
+        pictureUrl = req.file.filename;
     }
 
     // Créer la demande de savant

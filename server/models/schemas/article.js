@@ -92,10 +92,7 @@ const articleSchema = new Schema({
         url: {
             type: String,
             required: [true, 'L\'image principale de l\'article est requise'],
-            validate: {
-                validator: validateImageUrl,
-                message: 'L\'URL de l\'image n\'est pas valide'
-            }
+            
         },
     },
 
@@ -105,10 +102,7 @@ const articleSchema = new Schema({
         url: {
             type: String,
             required: true,
-            validate: {
-                validator: validatePdfUrl,
-                message: 'L\'URL doit pointer vers un fichier PDF'
-            }
+            
         },
     }],
 

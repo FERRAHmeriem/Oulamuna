@@ -42,6 +42,13 @@ const fileFilter = (req, file, cb) => {
         } else {
             cb(new Error('Seuls les fichiers PDF sont autorisés'), false);
         }
+    } else if (file.fieldname.includes('video') || file.fieldname.includes('videos')) {
+        // Accept only videos
+        if (file.mimetype.startsWith('video/')) {
+            cb(null, true);
+        } else {
+            cb(new Error('Seuls les fichiers vidéo sont autorisés'), false);
+        }
     } else {
         cb(null, true);
     }
@@ -51,7 +58,7 @@ const fileFilter = (req, file, cb) => {
 export const upload = multer({
     storage: storage,
     limits: {
-        fileSize: 10 * 1024 * 1024 // 10MB limit
+        fileSize: 50 * 1024 * 1024 // 50MB limit (increased for videos)
     },
     fileFilter: fileFilter
 });

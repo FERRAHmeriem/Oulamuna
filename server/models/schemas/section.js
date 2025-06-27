@@ -14,21 +14,13 @@ const sectionSchema = new Schema({
     },
     pictures: [{
         url: {
-            type: String,
-            validate: {
-                validator: validateImageUrl,
-                message: 'L\'URL de l\'image n\'est pas valide'
-            }
+            type: String,       
         },
     }],
     videos: [{
         url: {
             type: String,
-            required: true,
-            validate: {
-                validator: validateVideoUrl,
-                message: 'L\'URL de la vidéo n\'est pas valide'
-            }
+            required: true,       
         },
     }],
     order: {

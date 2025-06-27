@@ -21,14 +21,8 @@ const scholarSchema = new Schema({
     },
 
     picture: {
-
         type: String,
         required: [true, 'La photo du savant est requise'],
-        validate: {
-            validator: validateImageUrl,
-            message: 'L\'URL de l\'image n\'est pas valide'
-        }
-
     },
 
     epoque: {

@@ -169,7 +169,7 @@ export const signupStepThree = asyncHandler(async (req, res, next) => {
         }
         
         // Generate full URL for the uploaded image
-        updateData.profileImage = generateFileUrl(req.file.filename, req);
+        updateData.profileImage = req.file.filename;
     }
     
     // Update user with new profile image
