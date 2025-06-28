@@ -594,7 +594,7 @@ function ArticleListe() {
                       ))}
                   </div>
                 </div>
-                <div className=" bg-[#1F463D] shadow-[#25302993] shadow-lg rounded-lg basis-1/5 px-4 py-6 ">
+                <div className=" bg-[#1F463D] shadow-[#25302993] shadow-lg rounded-lg basis-1/5 px-4 py-6 space-y-4">
                     <div className="bg-[#1A3A34] flex flex-col items-center rounded-lg justify-center gap-4 p-2">
                       <div className="flex items-start ">
                         <p className="text-[#FAF2E1] text-2xl font-semibold ">Articles sauvegardés</p>
@@ -604,6 +604,14 @@ function ArticleListe() {
                       </div>
                         <button className=" px-2 py-2  border-2 bg-[#FAF2E1] rounded-xl placeholder-stone-600 text-stone-800 focus:outline-none focus:border-[#1A3A34] transition-colors">
                             <Link>voir les articles sauvegardés</Link>
+                        </button>
+                    </div>
+                    <div className="bg-[#1A3A34] flex flex-col items-center rounded-lg justify-center gap-4 p-2">
+                      <div >
+                        <p className="text-[#FAF2E1] text-2xl font-semibold ">Créer des nouveaux Articles </p>
+                      </div>
+                        <button className=" px-2 py-2  border-2 bg-[#FAF2E1] rounded-xl placeholder-stone-600 text-stone-800 focus:outline-none focus:border-[#1A3A34] transition-colors">
+                            <Link to="/ajouter_article">Ajouter Un Article</Link>
                         </button>
                     </div>
                 </div>

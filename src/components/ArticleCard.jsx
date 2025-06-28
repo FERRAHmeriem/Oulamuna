@@ -18,7 +18,7 @@ function ArticleCard({ article }) {
           </div>
           <Link
             className="py-2 px-8 bg-[#274a43fd] text-white font-medium tracking-wide cursor-pointer rounded-lg hover:bg-[#1A3A34] transition-colors duration-200 cursor-pointer w-fit"
-            to={`/articles/${article.id}`}
+            to={`/article/${article.id || 1}`}
           >
             Savoir Plus
           </Link>
