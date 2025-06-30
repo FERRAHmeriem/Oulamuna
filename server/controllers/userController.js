@@ -176,7 +176,7 @@ export const login = asyncHandler(async (req, res, next) => {
         sameSite: 'strict',
         maxAge: 7 * 24 * 60 * 60 * 1000
     });
-    res.status(200).json({ message: 'Logged in successfully' });
+    res.status(200).json({ message: 'Logged in successfully', user });
 
 })
 
@@ -239,7 +239,7 @@ export const updateProfile = asyncHandler(async (req, res, next) => {
 
     if (email && email.trim()) {
         const normalizedEmail = email.toLowerCase().trim();
-        
+
         // Email format validation
         if (!isValidEmailFormat(normalizedEmail)) {
             // Clean up uploaded file if validation fails
@@ -253,11 +253,11 @@ export const updateProfile = asyncHandler(async (req, res, next) => {
         // Check if email is different from current email
         if (normalizedEmail !== existingUser.email) {
             // Check if the new email already exists for another user
-            const emailExists = await User.findOne({ 
-                email: normalizedEmail, 
+            const emailExists = await User.findOne({
+                email: normalizedEmail,
                 _id: { $ne: userId } // Exclude current user
             });
-            
+
             if (emailExists) {
                 // Clean up uploaded file if email already exists
                 if (req.file) {
@@ -283,11 +283,11 @@ export const updateProfile = asyncHandler(async (req, res, next) => {
 
     if (userName && userName.trim()) {
         // Check if username already exists for another user
-        const usernameExists = await User.findOne({ 
-            userName: userName.trim(), 
-            _id: { $ne: userId } 
+        const usernameExists = await User.findOne({
+            userName: userName.trim(),
+            _id: { $ne: userId }
         });
-        
+
         if (usernameExists) {
             // Clean up uploaded file if username already exists
             if (req.file) {
@@ -296,19 +296,19 @@ export const updateProfile = asyncHandler(async (req, res, next) => {
             const error = new CustomError('Username already exists for another user!', 400);
             return next(error);
         }
-        
+
         updateData.userName = userName.trim();
     }
 
     // Handle profile image if uploaded
     if (req.file) {
         // Delete old profile image if it exists and is not default
-        if (existingUser.profileImage && 
-            existingUser.profileImage !== 'default-profile.png' && 
+        if (existingUser.profileImage &&
+            existingUser.profileImage !== 'default-profile.png' &&
             !existingUser.profileImage.includes('default-profile.png')) {
             deleteFile(existingUser.profileImage);
         }
-        
+
         updateData.profileImage = req.file.filename;
     }
 
@@ -328,7 +328,7 @@ export const updateProfile = asyncHandler(async (req, res, next) => {
     console.log(`User profile updated successfully for ID: ${userId}`);
 
     // Generate profile image URL if exists
-    const profileImageUrl = updatedUser.profileImage ? 
+    const profileImageUrl = updatedUser.profileImage ?
         updatedUser.profileImage : null;
 
     // Prepare user data for response
