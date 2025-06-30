@@ -170,13 +170,13 @@ export const login = asyncHandler(async (req, res, next) => {
     const token = signToken(user._id);
 
     //store the token in an HTTP-only cookie so JavaScript cannot access it (prevents XSS attacks)
-    res.cookie('token', token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: 7 * 24 * 60 * 60 * 1000
-    });
-    res.status(200).json({ message: 'Logged in successfully', user });
+    // res.cookie('token', token, {
+    //     httpOnly: true,
+    //     secure: process.env.NODE_ENV === 'production',
+    //     sameSite: 'strict',
+    //     maxAge: 7 * 24 * 60 * 60 * 1000
+    // });
+    res.status(200).json({ message: 'Logged in successfully', user, token });
 
 })
 
