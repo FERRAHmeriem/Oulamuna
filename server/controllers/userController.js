@@ -14,17 +14,25 @@ const signToken = id => {
     });
 };
 
-export const signupStepOne = asyncHandler(async (req, res, next) => {
-    const { firstName, familyName, email, password } = req.body;
+export const signup = asyncHandler(async (req, res, next) => {
+    const { firstName, familyName, email, password, birthday, sexe, userName } = req.body;
 
-    // Input validation
-    if (!firstName || !familyName || !email || !password) {
-        const error = new CustomError('All fields are required: firstName, familyName, email, password', 400);
+    // Input validation - tous les champs requis
+    if (!firstName || !familyName || !email || !password || !birthday || !sexe || !userName) {
+        // Clean up uploaded file if validation fails
+        if (req.file) {
+            deleteFile(req.file.filename);
+        }
+        const error = new CustomError('All fields are required: firstName, familyName, email, password, birthday, sexe, userName', 400);
         return next(error);
     }
 
     // Email format validation
     if (!isValidEmailFormat(email)) {
+        // Clean up uploaded file if validation fails
+        if (req.file) {
+            deleteFile(req.file.filename);
+        }
         const error = new CustomError('Please provide a valid email address format', 400);
         return next(error);
     }
@@ -35,23 +43,35 @@ export const signupStepOne = asyncHandler(async (req, res, next) => {
     console.log(`Checking if email exists: ${normalizedEmail}`);
     const existingUser = await User.findOne({ email: normalizedEmail });
     if (existingUser) {
+        // Clean up uploaded file if user already exists
+        if (req.file) {
+            deleteFile(req.file.filename);
+        }
         const error = new CustomError('Email already exists!', 400);
         return next(error);
     }
 
     console.log('Email is available, proceeding with registration');
 
-    // Create user first, then handle email verification
+    // Prepare user data with all information
     const userData = {
         firstName: firstName.trim(),
         familyName: familyName.trim(),
         email: normalizedEmail,
         password,
+        birthday,
+        sexe,
+        userName,
         isEmailVerified: false,
         createdAt: new Date()
     };
 
-    console.log('Creating new user...');
+    // Handle profile image if uploaded
+    if (req.file) {
+        userData.profileImage = req.file.filename;
+    }
+
+    console.log('Creating new user with complete profile...');
     const user = new User(userData);
     await user.save();
     console.log(`User created successfully with ID: ${user._id}`);
@@ -65,6 +85,7 @@ export const signupStepOne = asyncHandler(async (req, res, next) => {
         message: 'Account created successfully! We are sending you a verification email.',
         userId: user._id,
         email: user.email,
+        profileImage: user.profileImage || null,
         step: 'email_verification_in_progress'
     });
 
@@ -99,6 +120,7 @@ export const signupStepOne = asyncHandler(async (req, res, next) => {
             return res.status(201).json({ 
                 message: 'Account created successfully, but there was an issue with email verification. You can request a new verification email later.',
                 userId: user._id,
+                profileImage: user.profileImage || null,
                 emailSent: false,
                 warning: emailResult.error || emailResult.reason || 'Email verification failed'
             });
@@ -108,6 +130,7 @@ export const signupStepOne = asyncHandler(async (req, res, next) => {
         res.status(201).json({ 
             message: 'Account created successfully! Please check your email to verify your account.',
             userId: user._id,
+            profileImage: user.profileImage || null,
             emailSent: true,
             email: user.email
         });
@@ -118,88 +141,13 @@ export const signupStepOne = asyncHandler(async (req, res, next) => {
         res.status(201).json({ 
             message: 'Account created successfully, but there was an issue sending the verification email. Please contact support or try to resend.',
             userId: user._id,
+            profileImage: user.profileImage || null,
             emailSent: false,
             error: 'Email sending failed'
         });
     }
     */
-
-}
-);
-
-
-export const signupStepTwo = asyncHandler(async (req, res, next) => {
-    const { userId, birthday, sexe } = req.body;
-
-
-    const user = await User.findOneAndUpdate(
-        { _id: userId },
-        { $set: { birthday, sexe } },
-        { new: true }
-    );
-    if (!user) {
-        return next(new CustomError('User not found!', 404));
-    }
-
-    res.status(200).json({ message: 'Step two completed' });
-
-})
-export const signupStepThree = asyncHandler(async (req, res, next) => {
-    const { userId } = req.body;
-    
-    // Check if user exists
-    const existingUser = await User.findById(userId);
-    if (!existingUser) {
-        // Clean up uploaded file if user not found
-        if (req.file) {
-            deleteFile(req.file.filename);
-        }
-        return next(new CustomError('User not found!', 404));
-    }
-
-    let updateData = {};
-    
-    // If profile image was uploaded via Multer
-    if (req.file) {
-        // Delete old profile image if it exists and is not default
-        if (existingUser.profileImage && 
-            existingUser.profileImage !== 'default-profile.png' && 
-            !existingUser.profileImage.includes('default-profile.png')) {
-            deleteFile(existingUser.profileImage);
-        }
-        
-        // Generate full URL for the uploaded image
-        updateData.profileImage = req.file.filename;
-    }
-    
-    // Update user with new profile image
-    const user = await User.findOneAndUpdate(
-        { _id: userId },
-        { $set: updateData },
-        { new: true }
-    );
-
-    res.status(200).json({ 
-        message: 'Step three completed',
-        profileImage: user.profileImage // Return the full URL
-    });
 });
-
-
-export const signupStepFour = asyncHandler(async (req, res) => {
-    const { userId, userName } = req.body;
-    const user = await User.findOneAndUpdate(
-        { _id: userId },
-        { $set: { userName } },
-        { new: true }
-    );
-    if (!user) {
-        return next(new CustomError('User not found!', 404));
-    }
-
-    res.status(200).json({ message: 'Signup completed' });
-
-})
 
 export const login = asyncHandler(async (req, res, next) => {
     const { userName, password } = req.body;
