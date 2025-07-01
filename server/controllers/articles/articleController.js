@@ -197,7 +197,7 @@ export const createArticle = asyncHandler(async (req, res, next) => {
 
         await savedArticle.populate([
             { path: 'author', select: 'firstName familyName userName email' },
-            { path: 'scholar', select: 'name epoque domaineExpertise picture status articlesCount createdAt approvedAt' }
+            { path: 'scholar', select: 'name epoque domaineExpertise picture status articlesCount createdAt approvedAt biography' }
         ]);
 
         res.status(201).json({
