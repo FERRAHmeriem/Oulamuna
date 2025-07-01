@@ -134,6 +134,56 @@ export const searchScholars = asyncHandler(async (req, res) => {
     });
 });
 
+// ============= ADVANCED SEARCH SCHOLARS =============
+export const advancedSearchScholars = asyncHandler(async (req, res) => {
+    const { 
+        name, 
+        epoque, 
+        domaineExpertise, 
+        page = 1, 
+        limit = 10, 
+        sortBy = 'name', 
+        sortOrder = 'asc' 
+    } = req.query;
+
+    const filters = {};
+    if (name) filters.name = name;
+    if (epoque) filters.epoque = epoque;
+    if (domaineExpertise) filters.domaineExpertise = domaineExpertise;
+
+    const options = {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        sortBy,
+        sortOrder
+    };
+
+    const scholars = await Scholar.advancedSearch(filters, options);
+    
+    // total matching documents for pagination
+    const query = { status: 'approved' };
+    if (name) query.name = { $regex: name, $options: 'i' };
+    if (epoque) query.epoque = epoque;
+    if (domaineExpertise) query.domaineExpertise = domaineExpertise;
+    
+    const total = await Scholar.countDocuments(query);
+    const totalPages = Math.ceil(total / parseInt(limit));
+
+    res.status(200).json({
+        success: true,
+        data: scholars,
+        filters,
+        pagination: {
+            currentPage: parseInt(page),
+            totalPages,
+            totalItems: total,
+            itemsPerPage: parseInt(limit),
+            hasNextPage: parseInt(page) < totalPages,
+            hasPrevPage: parseInt(page) > 1
+        }
+    });
+});
+
 // ============= GET SINGLE SCHOLAR =============
 export const getScholar = asyncHandler(async (req, res, next) => {
     const { id } = req.params;
