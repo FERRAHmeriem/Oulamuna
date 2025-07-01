@@ -12,7 +12,7 @@ export const submitScholarRequest = asyncHandler(async (req, res, next) => {
         return next(new CustomError('Erreurs de validation', 400));
     }
 
-    const { name, epoque, domaineExpertise } = req.body;
+    const { name, epoque, domaineExpertise, biography } = req.body;
 
     // Vérifier si un savant avec le même nom existe déjà
     const existingScholar = await Scholar.findOne({ 
@@ -36,6 +36,7 @@ export const submitScholarRequest = asyncHandler(async (req, res, next) => {
         picture: pictureUrl,
         epoque,
         domaineExpertise,
+        biography,
         submittedBy: req.user._id,
         status: 'pending'
     });

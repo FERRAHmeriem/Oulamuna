@@ -289,7 +289,7 @@ export const updateArticle = asyncHandler(async (req, res, next) => {
         { new: true, runValidators: true }
     ).populate([
         { path: 'author', select: 'firstName familyName userName email' },
-        { path: 'scholar', select: 'name epoque domaineExpertise picture status articlesCount createdAt approvedAt' }
+        { path: 'scholar', select: 'name epoque domaineExpertise picture status articlesCount createdAt approvedAt biography' }
     ]);
 
     res.status(200).json({
@@ -307,7 +307,7 @@ export const getArticle = asyncHandler(async (req, res, next) => {
         .populate('author', 'firstName familyName userName email profilePicture')
         .populate({
             path: 'scholar',
-            select: 'name epoque domaineExpertise picture status articlesCount createdAt approvedAt',
+            select: 'name epoque domaineExpertise picture status articlesCount createdAt approvedAt biography',
             options: { virtuals: true }
         })
         .populate('comments.author', 'firstName familyName userName profilePicture')
@@ -373,7 +373,7 @@ export const getArticles = asyncHandler(async (req, res) => {
 
     const articles = await Article.find(query)
         .populate('author', 'firstName familyName userName profilePicture')
-        .populate('scholar', 'name epoque domaineExpertise picture status articlesCount createdAt approvedAt') // ghir jdid: Populate scholar
+        .populate('scholar', 'name epoque domaineExpertise picture status articlesCount createdAt approvedAt biography') // ghir jdid: Populate scholar
         .sort(sortOptions)
         .limit(parseInt(limit))
         .skip(skip);
@@ -440,12 +440,65 @@ export const getFeaturedArticles = asyncHandler(async (req, res, next) => {
         status: 'approved'
     })
         .populate('author', 'firstName familyName userName profilePicture')
-        .populate('scholar', 'name epoque domaineExpertise picture status articlesCount createdAt approvedAt') // ghir jdid tan: Populate scholar
+        .populate('scholar', 'name epoque domaineExpertise picture status articlesCount createdAt approvedAt biography') // ghir jdid tan: Populate scholar
         .sort({ publishedAt: -1 })
         .limit(parseInt(limit));
 
     res.status(200).json({
         success: true,
         data: articles
+    });
+});
+
+// ============= GET ARTICLES BY SCHOLAR =============
+export const getArticlesByScholar = asyncHandler(async (req, res, next) => {
+    const { scholarId } = req.params;
+    const {
+        page = 1,
+        limit = 10,
+        sortBy = 'createdAt',
+        sortOrder = 'desc',
+    } = req.query;
+
+    // Validate scholar exists
+    const scholar = await Scholar.findById(scholarId);
+    if (!scholar) {
+        return next(new CustomError('Savant non trouvé', 404));
+    }
+
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const query = { scholar: scholarId };
+
+    // Only show approved articles publicly (except for admins)
+    if (req.user?.role !== 'admin') {
+        query.status = 'approved';
+    }
+
+    const sortOptions = {};
+    sortOptions[sortBy] = sortOrder === 'desc' ? -1 : 1;
+
+    const articles = await Article.find(query)
+        .populate('author', 'firstName familyName userName profilePicture')
+        .sort(sortOptions)
+        .limit(parseInt(limit))
+        .skip(skip);
+
+    const total = await Article.countDocuments(query);
+    const totalPages = Math.ceil(total / parseInt(limit));
+
+    res.status(200).json({
+        success: true,
+        data: {
+            scholar: scholar,
+            articles: articles
+        },
+        pagination: {
+            currentPage: parseInt(page),
+            totalPages,
+            totalItems: total,
+            itemsPerPage: parseInt(limit),
+            hasNextPage: parseInt(page) < totalPages,
+            hasPrevPage: parseInt(page) > 1
+        }
     });
 });

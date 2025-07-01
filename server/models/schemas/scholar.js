@@ -33,6 +33,12 @@ const scholarSchema = new Schema({
             message: 'Veuillez sélectionner une époque valide'
         }
     },
+    biography: {
+        type: String,
+        required: [true, 'La biographie est requise'],
+        minLength: [10, 'La biographie doit contenir au moins 10 caractères'],
+        maxLength: [2000, 'La biographie ne peut pas dépasser 2000 caractères']
+    },
 
     domaineExpertise: {
         type: String,
