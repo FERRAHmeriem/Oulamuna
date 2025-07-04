@@ -9,7 +9,7 @@ export const createArticleVirtuals = (schema) => {
 
     // Virtual pour le nombre total de commentaires
     schema.virtual('commentsCount').get(function () {
-        return this.comments ? this.comments.filter(comment => comment.status === 'active').length : 0;
+        return this.comments ? this.comments.length : 0;
     });
 
     // Virtual pour vérifier si un article est publié
