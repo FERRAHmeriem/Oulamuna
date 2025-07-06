@@ -2,7 +2,7 @@ import React from 'react';
 import AdminHeader from '../../components/AdminSidebar';
 import { useSelector } from 'react-redux';
 import { useState, useEffect } from 'react';
-import profile_pic from '../../testingImages/iM.jpg';
+// import profile_pic from '../../testingImages/iM.jpg';
 function AdminHome() {
   const SERVER_URL = import.meta.env.VITE_SERVER;
   const { currentUser } = useSelector((state) => state.user);
