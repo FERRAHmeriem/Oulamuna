@@ -11,7 +11,7 @@ import { EPOQUES, DOMAINS_EXPERTISE, LANGUAGES } from '../utils/Article_constant
 import { ClipLoader } from "react-spinners";
 import Select from 'react-select';
 
-function ArticleListe() {
+function SavedArticle() {
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
@@ -93,8 +93,7 @@ function ArticleListe() {
       <Header />
       <div className="flex flex-col items-center justify-center gap-16 py-16 px-10">
         <div className="p-8 bg-[#1F463D] shadow-[#25302993] shadow-lg rounded-lg w-full space-y-6">
-          <h1 className='text-[#FAF2E1] text-left text-8xl font-semibold'>Nos Articles</h1>
-          <h2 className='text-[#FAF2E1] text-left text-3xl font-semibold'>Explorer des Articles sur Des Savants Algériens</h2>
+          <h1 className='text-[#FAF2E1] text-left text-8xl font-semibold'>Vos Articles Sauvgardées</h1>
         </div>
 
         <div className="flex w-full gap-5">
@@ -179,9 +178,9 @@ function ArticleListe() {
           {/* PANEL DROITE */}
           <div className="bg-[#1F463D] shadow-lg rounded-lg basis-1/5 px-4 py-6 space-y-4">
             <div className="bg-[#1A3A34] flex flex-col items-center rounded-lg justify-center gap-4 p-2">
-              <p className="text-[#FAF2E1] text-2xl font-semibold">Articles sauvegardés</p>
+              <p className="text-[#FAF2E1] text-2xl font-semibold">Explorer des Articles</p>
               <button className=" py-2 border-2 bg-[#FAF2E1] rounded-xl text-stone-800">
-                <Link to={`/articles_sauvgardées`}>Voir les articles sauvegardés</Link>
+                <Link to={`/articles`}>Voir les articles </Link>
               </button>
             </div>
             <div className="bg-[#1A3A34] flex flex-col items-center rounded-lg justify-center gap-4 p-2">
@@ -197,4 +196,4 @@ function ArticleListe() {
   );
 }
 
-export default ArticleListe;
+export default SavedArticle;

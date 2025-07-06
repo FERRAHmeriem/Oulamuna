@@ -6,13 +6,7 @@ export const EPOQUES = [
   'Algérie indépendante (depuis 1962)'
 ];
 
-export const LANGUAGES = [
-  'Arabe',
-  'Français', 
-  'Tamazight',
-  'Bilingue',
-  'Multilingue'
-];
+
 
 export const DOMAINS_EXPERTISE = [
   'Sciences religieuses',
@@ -33,7 +27,13 @@ export const DOMAINS_EXPERTISE = [
   'Poésie',
   'Autre'
 ];
-
+export const LANGUAGES = [
+  'Arabe',
+  'Français', 
+  'Tamazight',
+  'Bilingue',
+  'Multilingue'
+];
 export const ARTICLE_STATUS = [
   'draft',
   'pending', 

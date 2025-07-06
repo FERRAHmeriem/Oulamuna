@@ -1,9 +1,10 @@
 import React from "react";
 import { Routes, Route } from "react-router-dom";
-import Login from  "./pages/Login";
+import { PrivateRoute, HomeRedirect } from "./utils/routes";
+
+// Pages
+import Login from "./pages/Login";
 import Register from "./pages/Register";
-import Welcome from "./pages/welcome";
-import PrivateRoute from "./components/PrivateRoute";
 import Savant from "./pages/Savant";
 import SavantListe from "./pages/SavantListe";
 import ArticleListe from "./pages/ArticleListe";
@@ -14,26 +15,42 @@ import AddSavant from "./pages/AddSavant";
 import AdminHome from "./pages/AdminPages/AdminHome";
 import AdminArticles from "./pages/AdminPages/AdminArticles";
 import AdminSavant from "./pages/AdminPages/AdminSavants";
+import Notfound from "./pages/Notfound";
+import SavedArticle from "./pages/SavedArticle";
+import EditProfile from "./pages/editProfile";
+import AdminStatistiques from "./pages/AdminPages/AdminStatistiques";
+
 function App() {
   return (
-      <Routes>
-        <Route path="/" element={<Welcome />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/Savants" element={<SavantListe />} />
-        <Route path="/Savant/:id" element={<Savant />} />
-        <Route path="/articles" element={<ArticleListe />} />
-        <Route path="/article/:id" element={<Article />} />
-        <Route path="/ajouter_article" element={<AddArticle />} />
+    <Routes>
+      <Route path="/" element={<HomeRedirect />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      <Route path="/savants" element={<SavantListe />} />
+      <Route path="/savant/:id" element={<Savant />} />
+      <Route path="/articles" element={<ArticleListe />} />
+      <Route path="/article/:id" element={<Article />} />
+      <Route path="/not-found" element={<Notfound />} />
+      <Route path="*" element={<Notfound />} />
+
+      <Route element={<PrivateRoute />}>
         <Route path="/profile/:id" element={<Profile />} />
-        <Route path='/add_savant' element={<AddSavant/>}/>
-        <Route path='/admin_home' element={<AdminHome/>}/>
-        <Route path='/admin_articles' element={<AdminArticles/>}/>
-        <Route path='/admin_savants' element={<AdminSavant/>}/>
-        <Route element={<PrivateRoute/>}>
-        
-        </Route>
-      </Routes>
+        <Route path="/edit_profile" element={<EditProfile />} />
+        <Route path="/articles_sauvgardées" element={<SavedArticle />} />
+      </Route>
+
+      <Route element={<PrivateRoute userOnly={true} />}>
+        <Route path="/ajouter_article" element={<AddArticle />} />
+        <Route path="/ajouter_savant" element={<AddSavant />} />
+      </Route>
+
+      <Route element={<PrivateRoute adminOnly={true} />}>
+        <Route path="/admin_home" element={<AdminHome />} />
+        <Route path="/admin_articles" element={<AdminArticles />} />
+        <Route path="/admin_savants" element={<AdminSavant />} />
+        <Route path="/admin_statistique" element={<AdminStatistiques />} />
+      </Route>
+    </Routes>
   );
 }
 

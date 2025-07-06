@@ -1,5 +1,5 @@
-// AddArticle.jsx
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
+import { useSelector } from "react-redux";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Select from "react-select";
@@ -12,6 +12,8 @@ import {
   LANGUAGES,
   DOMAINS_EXPERTISE,
 } from "../utils/Article_constant";
+import { submitArticle } from "../utils/Article";
+import { fetchScholarList } from "../utils/Savant";
 
 const AddArticle = () => {
   const [counter, setCounter] = useState(0);
@@ -24,10 +26,29 @@ const AddArticle = () => {
   const [selectedDomaines, setSelectedDomaines] = useState([]);
   const [image, setImage] = useState(null);
   const [imageFile, setImageFile] = useState(null);
+  const [pdfFiles, setPdfFiles] = useState([]);
+  const [scholar, setScholar] = useState(null);
+  const [scholarOptions, setScholarOptions] = useState([]);
+
   const [sections, setSections] = useState([
     { title: "", content: "", pictures: [], videos: [], order: 1 },
     { title: "", content: "", pictures: [], videos: [], order: 2 },
   ]);
+
+  const { currentUser } = useSelector((state) => state.user);
+
+  useEffect(() => {
+    const loadScholars = async () => {
+      try {
+        const data = await fetchScholarList();
+        const options = data.map((s) => ({ label: s.name, value: s._id }));
+        setScholarOptions(options);
+      } catch (err) {
+        toast.error("Erreur lors du chargement des savants");
+      }
+    };
+    loadScholars();
+  }, []);
 
   const toSelectOptions = (arr) => arr.map((item) => ({ label: item, value: item }));
 
@@ -44,7 +65,7 @@ const AddArticle = () => {
 
   const AddCounter = () => {
     if (
-      (counter === 0 && titre && selectedEpoque && selectedLangue && selectedDomaines.length > 0) ||
+      (counter === 0 && titre && selectedEpoque && selectedLangue && selectedDomaines.length > 0 && scholar) ||
       (counter === 1 && imageFile)
     ) {
       setCounter((prev) => prev + 1);
@@ -65,46 +86,72 @@ const AddArticle = () => {
   };
 
   const addSection = () => {
-    setSections([...sections, { title: "", content: "", pictures: [], videos: [], order: sections.length + 1 }]);
+    setSections([
+      ...sections,
+      { title: "", content: "", pictures: [], videos: [], order: sections.length + 1 },
+    ]);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     if (e) e.preventDefault();
     if (!imageFile) {
       toast.error("Veuillez sélectionner une image !");
       return;
     }
+
     const data = new FormData();
-    data.append("titre", titre);
+    data.append("title", titre);
     data.append("description", description);
     data.append("epoque", selectedEpoque?.value);
-    data.append("langue", selectedLangue?.value);
-    data.append("domaines", JSON.stringify(selectedDomaines.map((d) => d.value)));
-    data.append("image", imageFile);
-    data.append("sections", JSON.stringify(sections));
+    data.append("articleLanguage", selectedLangue?.value);
+    data.append("domaineExpertise", selectedDomaines[0]?.value);
+    data.append("imageArticle", imageFile);
+    data.append("scholar", scholar?.value);
 
-    console.log("Formulaire soumis :", {
-      titre,
-      description,
-      epoque: selectedEpoque?.value,
-      langue: selectedLangue?.value,
-      domaines: selectedDomaines.map((d) => d.value),
-      imageFile,
-      sections,
+    pdfFiles.forEach((file) => {
+      data.append("pdfFiles", file);
     });
 
-    toast.success("Article enregistré avec succès !");
+    sections.forEach((section, index) => {
+      data.append(`sections[${index}].title`, section.title);
+      data.append(`sections[${index}].content`, section.content);
+      data.append(`sections[${index}].order`, section.order);
+
+      section.pictures.forEach((pic) => {
+        data.append(`sections[${index}].pictures`, pic.file);
+      });
+
+      section.videos.forEach((vid) => {
+        data.append(`sections[${index}].videos`, vid.file);
+      });
+    });
+
+    try {
+      await submitArticle(data, currentUser.token);
+      toast.success("Article soumis avec succès !");
+    } catch (err) {
+      toast.error(err.message || "Erreur lors de la soumission");
+    }
   };
 
   return (
     <div className="flex flex-col gap-[2%] justify-start bg-[#1A3A34] min-h-screen">
       <Header />
       <div className="flex items-center bg-[#EBE3CB] my-20 mx-50 rounded-4xl p-16">
-        {/* Étape 1 */}
         <div className={counter === 0 ? "w-full space-y-6" : "hidden"}>
           <h1 className="text-5xl font-bold text-[#193c35] text-center">CRÉER UN NOUVEL ARTICLE</h1>
           <input type="text" placeholder="Titre de l'article" value={titre} onChange={(e) => setTitre(e.target.value)} className="w-full border-2 border-[#193c35] rounded-md p-3 mb-4 text-[#193c35]" />
-          <textarea rows="5" placeholder="Description (facultatif)" value={description} onChange={(e) => setDescription(e.target.value)} className="w-full border-2 border-[#193c35] rounded-md p-3 mb-4 text-[#193c35]" />
+          <textarea rows="5" placeholder="Description" value={description} onChange={(e) => setDescription(e.target.value)} className="w-full border-2 border-[#193c35] rounded-md p-3 mb-4 text-[#193c35]" />
+          <div className="mb-4">
+            <label className="text-[#193c35] mb-1 block">Savant</label>
+            <Select
+              options={scholarOptions}
+              value={scholar}
+              onChange={setScholar}
+              placeholder="Sélectionnez un savant"
+              isSearchable
+            />
+          </div>
           <div className="mb-4">
             <label className="text-[#193c35] mb-1 block">Époque</label>
             <Select options={toSelectOptions(EPOQUES)} value={selectedEpoque} onChange={setSelectedEpoque} placeholder="Sélectionnez une époque" />
@@ -145,42 +192,44 @@ const AddArticle = () => {
                 <input type="text" placeholder="Titre" value={section.title} onChange={(e) => handleSectionChange(idx, "title", e.target.value)} className="w-full border p-2 mb-2" />
                 <textarea rows="4" placeholder="Contenu" value={section.content} onChange={(e) => handleSectionChange(idx, "content", e.target.value)} className="w-full border p-2 mb-4" />
                 <div className="flex items-center justify-around">
-                <div className="mb-4 flex flex-col items-center">
-                  <label className="font-semibold text-lg block mb-2 text-[#193c35]">Ajouter une ou plusieurs images</label>
-                  <div className="cursor-pointer w-40" onClick={() => document.getElementById(`img-upload-${idx}`).click()}>
-                    <img src={imageDeposée} alt="Uploader une image" className="w-40 border rounded-md hover:opacity-80 cursor-pointer" />
+                  {/* Images */}
+                  <div className="mb-4 flex flex-col items-center">
+                    <label className="font-semibold text-lg block mb-2 text-[#193c35]">Ajouter une ou plusieurs images</label>
+                    <div className="cursor-pointer w-40" onClick={() => document.getElementById(`img-upload-${idx}`).click()}>
+                      <img src={imageDeposée} alt="Uploader une image" className="w-40 border rounded-md hover:opacity-80 cursor-pointer" />
+                    </div>
+                    <input type="file" id={`img-upload-${idx}`} accept="image/*" multiple className="hidden"
+                      onChange={(e) => {
+                        const files = Array.from(e.target.files).map((file) => ({ file, preview: URL.createObjectURL(file) }));
+                        const updated = [...sections];
+                        updated[idx].pictures = [...updated[idx].pictures, ...files];
+                        setSections(updated);
+                      }} />
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {section.pictures.map((img, i) => (
+                        <img key={i} src={img.preview} alt={`img-${i}`} className="w-24 h-24 object-cover border rounded" />
+                      ))}
+                    </div>
                   </div>
-                  <input type="file" id={`img-upload-${idx}`} accept="image/*" multiple className="hidden" 
-                    onChange={(e) => {
-                    const files = Array.from(e.target.files).map((file) => ({ file, preview: URL.createObjectURL(file) }));
-                    const updated = [...sections];
-                    updated[idx].pictures = [...updated[idx].pictures, ...files];
-                    setSections(updated);
-                  }} />
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {section.pictures.map((img, i) => (
-                      <img key={i} src={img.preview} alt={`img-${i}`} className="w-24 h-24 object-cover border rounded" />
-                    ))}
-                  </div>
-                </div>
 
-                <div className="mb-4 flex flex-col items-center">
-                  <label className="font-semibold text-lg block mb-2 text-[#193c35]">Ajouter une ou plusieurs vidéos</label>
-                  <div className="cursor-pointer w-40" onClick={() => document.getElementById(`vid-upload-${idx}`).click()}>
-                    <img src={videoDeposée} alt="Uploader une vidéo" className="w-40 border rounded-md hover:opacity-80" />
+                  {/* Vidéos */}
+                  <div className="mb-4 flex flex-col items-center">
+                    <label className="font-semibold text-lg block mb-2 text-[#193c35]">Ajouter une ou plusieurs vidéos</label>
+                    <div className="cursor-pointer w-40" onClick={() => document.getElementById(`vid-upload-${idx}`).click()}>
+                      <img src={videoDeposée} alt="Uploader une vidéo" className="w-40 border rounded-md hover:opacity-80" />
+                    </div>
+                    <input type="file" id={`vid-upload-${idx}`} accept="video/*" multiple className="hidden" onChange={(e) => {
+                      const files = Array.from(e.target.files).map((file) => ({ file, preview: URL.createObjectURL(file) }));
+                      const updated = [...sections];
+                      updated[idx].videos = [...updated[idx].videos, ...files];
+                      setSections(updated);
+                    }} />
+                    <div className="flex flex-wrap gap-4 mt-2">
+                      {section.videos.map((vid, i) => (
+                        <video key={i} src={vid.preview} controls className="w-48 h-32 border rounded" />
+                      ))}
+                    </div>
                   </div>
-                  <input type="file" id={`vid-upload-${idx}`} accept="video/*" multiple className="hidden" onChange={(e) => {
-                    const files = Array.from(e.target.files).map((file) => ({ file, preview: URL.createObjectURL(file) }));
-                    const updated = [...sections];
-                    updated[idx].videos = [...updated[idx].videos, ...files];
-                    setSections(updated);
-                  }} />
-                  <div className="flex flex-wrap gap-4 mt-2">
-                    {section.videos.map((vid, i) => (
-                      <video key={i} src={vid.preview} controls className="w-48 h-32 border rounded" />
-                    ))}
-                  </div>
-                </div>
                 </div>
               </div>
             ))}
@@ -198,15 +247,39 @@ const AddArticle = () => {
               ) : (
                 <button onClick={() => {
                   if (isSectionValid(sections[subStep])) {
-                    handleSubmit();
+                    setCounter(3); // 👉 Aller à l'étape PDF
                   } else {
                     toast.error("Veuillez remplir tous les champs de la section !");
                   }
-                }} className="bg-green-600 text-white px-4 py-2 rounded">Soumettre</button>
+                }} className="bg-[#193c35] text-white px-4 py-2 rounded">SUIVANT</button>
               )}
             </div>
             <button onClick={addSection} className="mt-4 bg-blue-500 text-white px-4 py-2 rounded">Ajouter une section</button>
           </div>
+        </div>
+
+        {/* Étape 4 : PDF */}
+        <div className={counter === 3 ? "w-full flex flex-col items-center gap-6 text-[#193c35]" : "hidden"}>
+          <h2 className="text-4xl font-bold text-center">AJOUTER DES FICHIERS PDF</h2>
+          <div className="border-2 border-[#193c35] rounded-md bg-[#fdf1d3] p-6 w-[600px] text-center">
+            <p className="font-semibold text-lg mb-4">Déposez un ou plusieurs fichiers PDF (facultatif)</p>
+            <input
+              type="file"
+              accept="application/pdf"
+              multiple
+              onChange={(e) => {
+                const files = Array.from(e.target.files);
+                setPdfFiles(files);
+              }}
+              className="w-full text-center mb-4"
+            />
+            <ul className="list-disc list-inside text-left">
+              {pdfFiles.map((file, index) => (
+                <li key={index} className="text-sm">{file.name}</li>
+              ))}
+            </ul>
+          </div>
+          <button onClick={handleSubmit} className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700">Soumettre</button>
         </div>
       </div>
       <ToastContainer position="bottom-right" autoClose={3000} />

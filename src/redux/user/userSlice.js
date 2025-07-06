@@ -25,11 +25,17 @@ const userSlice = createSlice({
     updateUserStart: (state) => {
       state.loading = true;
     },
-    updateUserSuccess: (state, action) => {
-      state.currentUser = action.payload;
-      state.loading = false;
-      state.error = null;
-    },
+   updateUserSuccess: (state, action) => {
+  // Ne met à jour que les infos utilisateur, pas le token
+  state.currentUser = {
+    ...state.currentUser,
+    ...action.payload,
+    token: state.currentUser.token, // 🔒 On garde le token
+  };
+  state.loading = false;
+  state.error = null;
+    }, 
+
     updateUserFailure: (state, action) => {
       state.error = action.payload;
       state.loading = false;
