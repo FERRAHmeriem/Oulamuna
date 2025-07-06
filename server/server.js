@@ -9,9 +9,14 @@ import globalErrorHandler from "./controllers/errorController.js";
 import rateLimit from 'express-rate-limit';
 import { upload } from './config/multer.js';
 import uploadRouter from './routes/uploadRouter.js';
-
+import cors from 'cors';
 
 const app = express();
+const frontEndPoint = process.env.FRONTEND_ENDPOINT;
+app.use(cors({
+  origin: frontEndPoint, 
+  credentials: true 
+}));
 const server = createServer(app);
 app.use(json());
 
@@ -36,7 +41,6 @@ const loginLimiter = rateLimit({
 });
 
 app.use('/api/users/login', loginLimiter);
-
 app.use('/api/users', userRouter);
 app.use('/api/articles', articleRouter);
 app.use('/api/scholars', scholarRouter)

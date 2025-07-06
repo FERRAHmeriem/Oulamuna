@@ -60,39 +60,41 @@ export const submitScholarRequest = asyncHandler(async (req, res, next) => {
 });
 // ============= GET ALL APPROVED SCHOLARS =============
 export const getApprovedScholars = asyncHandler(async (req, res) => {
-    const {
-        page = 1,
-        limit = 10,
-        sortBy = 'name',
-        sortOrder = 'asc',
-    } = req.query;
+  const {
+    page = 1,
+    limit = 10,
+    sortBy = 'name',
+    sortOrder = 'asc',
+  } = req.query;
 
-    const options = {
-        page: parseInt(page),
-        limit: parseInt(limit),
-        sortBy,
-        sortOrder
-    };
+  const parsedPage = parseInt(page);
+  const parsedLimit = parseInt(limit);
+  const skip = (parsedPage - 1) * parsedLimit;
+  const sortOptions = {};
+  sortOptions[sortBy] = sortOrder === 'asc' ? 1 : -1;
 
-    const scholars = await Scholar.advancedSearch(options);
-    const total = await Scholar.countDocuments({ 
-        status: 'approved',
-    });
-    
-    const totalPages = Math.ceil(total / parseInt(limit));
+  const query = { status: 'approved' };
 
-    res.status(200).json({
-        success: true,
-        data: scholars,
-        pagination: {
-            currentPage: parseInt(page),
-            totalPages,
-            totalItems: total,
-            itemsPerPage: parseInt(limit),
-            hasNextPage: parseInt(page) < totalPages,
-            hasPrevPage: parseInt(page) > 1
-        }
-    });
+  const scholars = await Scholar.find(query)
+    .sort(sortOptions)
+    .skip(skip)
+    .limit(parsedLimit);
+
+  const total = await Scholar.countDocuments(query);
+  const totalPages = Math.ceil(total / parsedLimit);
+
+  res.status(200).json({
+    success: true,
+    data: scholars,
+    pagination: {
+      currentPage: parsedPage,
+      totalPages,
+      totalItems: total,
+      itemsPerPage: parsedLimit,
+      hasNextPage: parsedPage < totalPages,
+      hasPrevPage: parsedPage > 1,
+    },
+  });
 });
 
 // ============= SEARCH SCHOLARS =============
@@ -346,4 +348,14 @@ export const getScholarStats = asyncHandler(async (req, res) => {
         success: true,
         data: stats
     });
+});
+
+// ======================= FOR ADDING ARTICLE ===============================
+export const scholarList = asyncHandler(async (req, res) => {
+  const scholars = await Scholar.find({ status: 'approved' }).select('_id name');
+
+  res.status(200).json({
+    success: true,
+    data: scholars
+  });
 });

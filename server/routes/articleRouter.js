@@ -6,7 +6,8 @@ import {
     createArticle,
     updateArticle,
     getArticle,
-    getArticles, deleteArticle, getFeaturedArticles, getArticlesByScholar
+    getArticles, deleteArticle, getFeaturedArticles, getArticlesByScholar,
+    getArticlesByAuthor,
 } from '../controllers/articles/articleController.js';
 import {
     searchByDomain,
@@ -133,5 +134,9 @@ router.patch('/:id/archive', protect, roleMiddleware('admin'), archiveArticle); 
 router.get('/admin/global-stats', protect, roleMiddleware('admin'), getGlobalStats); // done
 
 router.get('/scholar/:scholarId', getArticlesByScholar);
+
+
+
+router.get('/author/:authorId',protect, getArticlesByAuthor);
 
 export default router;

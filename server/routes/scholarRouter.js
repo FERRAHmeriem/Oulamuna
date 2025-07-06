@@ -9,7 +9,8 @@ import {
     approveScholar,
     rejectScholar,
     getScholarStats,
-    advancedSearchScholars
+    scholarList,
+    advancedSearchScholars,
 } from '../controllers/scholarController.js';
 import protect from '../middlewares/auth.js';
 import roleMiddleware from '../middlewares/role.js';
@@ -25,6 +26,9 @@ router.get('/', getApprovedScholars); //done
 router.get('/search', searchScholars); //done
 // Advanced search scholars by multiple criteria
 router.get('/search/advanced', advancedSearchScholars); //done
+
+// list of scholars (_id + name)
+router.get('/list', scholarList); 
 
 // Get single scholar (public access for approved scholars)
 router.get('/:id', getScholar); //done

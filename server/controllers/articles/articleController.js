@@ -304,13 +304,13 @@ export const getArticle = asyncHandler(async (req, res, next) => {
     const { id } = req.params;
 
     const article = await Article.findById(id)
-        .populate('author', 'firstName familyName userName email profilePicture')
+        .populate('author', 'firstName familyName userName email profileImage')
         .populate({
             path: 'scholar',
             select: 'name epoque domaineExpertise picture status articlesCount createdAt approvedAt biography',
             options: { virtuals: true }
         })
-        .populate('comments.author', 'firstName familyName userName profilePicture')
+        .populate('comments.author', 'firstName familyName userName profileImage')
         .populate('likes.user', 'firstName familyName userName')
         .populate('adminReview.reviewedBy', 'firstName familyName userName');
 
@@ -375,7 +375,7 @@ export const getArticles = asyncHandler(async (req, res) => {
         .populate('author', 'firstName familyName userName profilePicture')
         .populate('scholar', 'name epoque domaineExpertise picture status articlesCount createdAt approvedAt biography') // ghir jdid: Populate scholar
         .sort(sortOptions)
-        .limit(parseInt(limit))
+        .limit(parseInt(limit)) 
         .skip(skip);
 
     const total = await Article.countDocuments(query);
@@ -501,4 +501,56 @@ export const getArticlesByScholar = asyncHandler(async (req, res, next) => {
             hasPrevPage: parseInt(page) > 1
         }
     });
+});
+
+
+
+
+
+
+// controllers/articleController.js
+export const getArticlesByAuthor = asyncHandler(async (req, res, next) => {
+  const { authorId } = req.params;
+  const {
+    page = 1,
+    limit = 6,
+    sortBy = 'createdAt',
+    sortOrder = 'desc',
+  } = req.query;
+
+  const skip = (parseInt(page) - 1) * parseInt(limit);
+  const query = { author: authorId };
+
+  // Si l'utilisateur n'est pas admin, filtrer les articles approuvés
+  if (req.user?.role !== 'admin') {
+    query.status = 'approved';
+  }
+
+  const sortOptions = {};
+  sortOptions[sortBy] = sortOrder === 'desc' ? -1 : 1;
+
+  const articles = await Article.find(query)
+    .populate('scholar', 'name')
+    .populate('author', 'userName ')
+    .sort(sortOptions)
+    .limit(parseInt(limit))
+    .skip(skip);
+
+  const total = await Article.countDocuments(query);
+  const totalPages = Math.ceil(total / parseInt(limit));
+
+  res.status(200).json({
+    success: true,
+    data: {
+      articles
+    },
+    pagination: {
+      currentPage: parseInt(page),
+      totalPages,
+      totalItems: total,
+      itemsPerPage: parseInt(limit),
+      hasNextPage: parseInt(page) < totalPages,
+      hasPrevPage: parseInt(page) > 1
+    }
+  });
 });

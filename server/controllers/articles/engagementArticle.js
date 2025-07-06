@@ -82,7 +82,7 @@ export const addComment = asyncHandler(async (req, res, next) => {
     };
 
     const updatedArticle = await article.addComment(commentData);
-    await updatedArticle.populate('comments.author', 'firstName familyName userName profilePicture');
+    await updatedArticle.populate('comments.author', 'firstName familyName userName profileImage');
 
     const newComment = updatedArticle.comments[updatedArticle.comments.length - 1];
 
@@ -91,6 +91,7 @@ export const addComment = asyncHandler(async (req, res, next) => {
         message: 'Commentaire ajouté avec succès',
         data: newComment
     });
+
 });
 
 // ============= DELETE COMMENT =============
