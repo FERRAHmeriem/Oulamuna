@@ -5,6 +5,7 @@ import { isValidEmailFormat, sendVerificationEmail } from '../services/emailServ
 import asyncHandler from 'express-async-handler';
 import CustomError from '../utils/customError.js';
 import { deleteFile, generateFileUrl } from '../utils/fileUtils.js';
+import Article from '../models/schemas/article.js';
 
 
 // JWT token generation function
@@ -381,21 +382,21 @@ export const updateProfile = asyncHandler(async (req, res, next) => {
 });
 
 export const getUserById = asyncHandler(async (req, res, next) => {
-  const { id } = req.params;
+    const { id } = req.params;
 
-  const user = await User.findById(id).select('-password'); // on exclut le mot de passe
+    const user = await User.findById(id).select('-password'); // on exclut le mot de passe
 
-  if (!user) {
-    return res.status(404).json({
-      success: false,
-      message: 'Utilisateur non trouvé',
+    if (!user) {
+        return res.status(404).json({
+            success: false,
+            message: 'Utilisateur non trouvé',
+        });
+    }
+
+    res.status(200).json({
+        success: true,
+        data: user,
     });
-  }
-
-  res.status(200).json({
-    success: true,
-    data: user,
-  });
 });
 
 
@@ -409,5 +410,84 @@ export const logout = asyncHandler(async (req, res, next) => {
     res.status(200).json({
         success: true,
         message: 'Déconnexion réussie',
+    });
+});
+
+export const getAllUsers = asyncHandler(async (req, res, next) => {
+    // Pagination parameters
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 10;
+    const startIndex = (page - 1) * limit;
+
+    // Get total count for pagination metadata
+    const totalUsers = await User.countDocuments();
+
+    // Get statistics for all users
+    const verifiedCount = await User.countDocuments({ verified: true });
+    const unverifiedCount = await User.countDocuments({ verified: false });
+
+    // Execute query with pagination
+    const users = await User.find()
+        .select('-password')
+        .skip(startIndex)
+        .limit(limit)
+        .sort({ _id: -1 });
+
+    // Pagination result
+    const pagination = {
+        total: totalUsers,
+        pages: Math.ceil(totalUsers / limit),
+        currentPage: page,
+        limit
+    };
+
+    // Statistics for all users (not just current page)
+    const statistics = {
+        total: totalUsers,
+        verified: verifiedCount,
+        unverified: unverifiedCount
+    };
+
+    res.status(200).json({
+        success: true,
+        count: users.length,
+        pagination,
+        statistics,
+        data: users
+    });
+});
+
+export const deleteUser = asyncHandler(async (req, res, next) => {
+    const { id } = req.params;
+
+    // Check if user exists before deletion
+    const user = await User.findById(id);
+
+    if (!user) {
+        return next(new CustomError('User not found!', 404));
+    }
+
+    // Delete profile image if it exists and is not default
+    if (user.profileImage &&
+        user.profileImage !== 'default-profile.png' &&
+        !user.profileImage.includes('default-profile.png')) {
+        deleteFile(user.profileImage);
+    }
+
+    // Delete all articles associated with this user
+    try {
+        const deletedArticles = await Article.deleteMany({ author: id });
+        console.log(`Deleted ${deletedArticles.deletedCount} articles belonging to user ${id}`);
+    } catch (error) {
+        console.error('Error deleting user articles:', error);
+        // Continue with user deletion even if article deletion fails
+    }
+
+    // Delete the user
+    await User.findByIdAndDelete(id);
+
+    res.status(200).json({
+        success: true,
+        message: 'User and all associated articles deleted successfully'
     });
 });
