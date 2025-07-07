@@ -1,13 +1,7 @@
-// src/utils/routes.jsx
 import React from "react";
 import { useSelector } from "react-redux";
 import { Navigate, Outlet } from "react-router-dom";
-
-/**
- * 🔒 Route protégée
- * @param {boolean} adminOnly - uniquement accessible par les admins
- * @param {boolean} userOnly - uniquement accessible par les utilisateurs normaux
- */
+import Welcome from "../pages/Welcome";
 export const PrivateRoute = ({ adminOnly = false, userOnly = false }) => {
   const { currentUser } = useSelector((state) => state.user);
 
@@ -26,15 +20,14 @@ export const PrivateRoute = ({ adminOnly = false, userOnly = false }) => {
   return <Outlet />;
 };
 
-/**
- * 🔁 Redirection intelligente depuis "/"
- */
 export const HomeRedirect = () => {
   const { currentUser } = useSelector((state) => state.user);
-
-  if (currentUser?.role === "admin") {
+  if (currentUser) {
+    if (currentUser.role === "admin") {
     return <Navigate to="/admin_home" replace />;
   }
 
   return <Navigate to="/articles" replace />;
-};
+  }else  return <Welcome />;
+  } 
+ 
