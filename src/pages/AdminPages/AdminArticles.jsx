@@ -95,14 +95,14 @@ function AdminArticles() {
     return article.status === filter;
   });
   const handleArchive = async (articleId) => {
-  try {
-    await archiveArticle(articleId, currentUser.token);
-    toast.success('Article archivé avec succès !');
-    loadArticles();
-  } catch (err) {
-    toast.error('Erreur lors de l’archivage.');
-  }
-};
+    try {
+      await archiveArticle(articleId, currentUser.token);
+      toast.success('Article archivé avec succès !');
+      loadArticles();
+    } catch (err) {
+      toast.error('Erreur lors de l’archivage.');
+    }
+  };
 
 
   if (!admin) return <div>Loading...</div>;
@@ -111,12 +111,17 @@ function AdminArticles() {
     <div className="flex min-h-screen">
       <AdminHeader />
 
-      <div className="ml-64 p-6 w-full">
-        <div className='flex items-center justify-between mb-6'>
-          <h2 className="text-3xl font-semibold">
-            Bienvenue {admin.familyName} {admin.firstName}, dans le dashboard Admin
-          </h2>
-          <img className='w-12 h-12 object-cover rounded-full shadow-md' src={`${SERVER_URL}/api/uploads/${admin.profileImage}`} alt="admin" />
+      <div className="ml-64 p-8 w-full">
+        <div className='flex items-center justify-between mb-8'>
+          <div>
+            <h2 className="text-3xl font-semibold text-gray-800">Bienvenue {admin.familyName} {admin.firstName}</h2>
+
+          </div>
+          <img
+            className='w-12 h-12 object-cover rounded-full border-2 border-gray-200'
+            src={`${SERVER_URL}/api/uploads/${admin.profileImage}`}
+            alt="Profil admin"
+          />
         </div>
 
         <div>
@@ -152,17 +157,17 @@ function AdminArticles() {
                       <p className="text-2xl font-semibold text-stone-800  block">
                         {article.title}
                       </p>
-                       <span
-                          className={`font-semibold px-2 py-1 rounded-lg absolute top-0 right-8
+                      <span
+                        className={`font-semibold px-2 py-1 rounded-lg absolute top-0 right-8
                             ${article.status === 'approved' ? 'text-green-700 bg-green-100' : 'text-red-700 bg-red-100'}`}>
-                          {article.status}
-                        </span>
-                        {article.status === 'approved' && <img
-                            src={not_archived}
-                            onClick={() => handleArchive(article._id)}
-                            className="absolute top-[-10px] right-0 w-8 h-8 cursor-pointer hover:scale-105 transition-transform duration-200"
-                            alt="archive"
-                          />}
+                        {article.status}
+                      </span>
+                      {article.status === 'approved' && <img
+                        src={not_archived}
+                        onClick={() => handleArchive(article._id)}
+                        className="absolute top-[-10px] right-0 w-8 h-8 cursor-pointer hover:scale-105 transition-transform duration-200"
+                        alt="archive"
+                      />}
 
                       <p className="text-sm text-gray-600 my-1">
                         {getShortDescription(article.description)}
@@ -202,7 +207,7 @@ function AdminArticles() {
                           </button>
                         </>
                       )}
-                      {((article.status === 'approved') || (article.status === 'archived' )) && (
+                      {((article.status === 'approved') || (article.status === 'archived')) && (
                         <button
                           onClick={() => openStatsModal(article._id)}
                           className="px-2 py-2 text-white bg-[#274a43fd] hover:bg-[#1f3430fd] rounded cursor-pointer"

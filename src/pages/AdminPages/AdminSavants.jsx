@@ -3,7 +3,7 @@ import { useSelector } from 'react-redux';
 import AdminHeader from '../../components/AdminSidebar';
 import { Link } from 'react-router-dom';
 import { getPendingScholars, approveScholar, rejectScholar } from '../../utils/admin';
-import { toast , ToastContainer } from 'react-toastify';
+import { toast, ToastContainer } from 'react-toastify';
 import { ClipLoader } from 'react-spinners';
 
 function AdminSavant() {
@@ -18,7 +18,7 @@ function AdminSavant() {
   const [showApproveModal, setShowApproveModal] = useState(false);
   const [approveNotes, setApproveNotes] = useState('');
   const [selectedApproveId, setSelectedApproveId] = useState(null);
-  const [isdata , setIsData] = useState(false);
+  const [isdata, setIsData] = useState(false);
 
   useEffect(() => {
     if (currentUser) {
@@ -79,58 +79,63 @@ function AdminSavant() {
     <div className="flex min-h-screen">
       <AdminHeader />
 
-      <div className="ml-64 p-6 w-full">
-        <div className='flex items-center justify-between mb-6'>
-          <h2 className="text-3xl font-semibold">
-            Bienvenue {admin.familyName} {admin.firstName}, dans le dashboard Admin
-          </h2>
-          <img className='w-12 h-12 object-cover rounded-full shadow-md'   src={`${SERVER_URL}/api/uploads/${admin.profileImage}`} alt="admin" />
+      <div className="ml-64 p-8 w-full">
+        <div className='flex items-center justify-between mb-8'>
+          <div>
+            <h2 className="text-3xl font-semibold text-gray-800">Bienvenue {admin.familyName} {admin.firstName}</h2>
+
+          </div>
+          <img
+            className='w-12 h-12 object-cover rounded-full border-2 border-gray-200'
+            src={`${SERVER_URL}/api/uploads/${admin.profileImage}`}
+            alt="Profil admin"
+          />
         </div>
 
         <div>
           <h1 className="text-2xl font-bold mb-4">Nouveaux Savants</h1>
           <div className='flex flex-col gap-6'>
-           {!savants || !isdata ? (
-            <div className="flex justify-center items-center h-[70vh]">
-              <ClipLoader size={40} color="#2f7062" />
-            </div>
-          ) : savants.length > 0 ? (
-            savants.map((savant) => (
-              <div key={savant._id} className='flex bg-white shadow-lg rounded-lg overflow-hidden'>
-                <img src={`${import.meta.env.VITE_SERVER}/api/uploads/${savant.picture}`} alt="savant" className='w-42 h-64 object-cover' />
-                <div className='p-4 flex items-center justify-between w-full'>
-                  <div>
-                    <Link to={`/savant/${savant._id}`} className="text-lg font-semibold text-blue-600 hover:underline block">
-                      {savant.name}
-                    </Link>
-                    <p className='text-sm text-gray-600 my-1'>
-                      Époque : <span className='font-medium'>{savant.epoque}</span>
-                    </p>
-                    <p className='text-sm text-gray-600'>
-                      Domaine : <span className='font-medium'>{savant.domaineExpertise}</span>
-                    </p>
-                  </div>
-                  <div className='mt-3 flex flex-col gap-2'>
-                    <button
-                      onClick={() => {
-                        setSelectedApproveId(savant._id);
-                        setShowApproveModal(true);
-                        setApproveNotes('');
-                      }}
-                      className='px-4 py-2 text-white bg-[#1f863a] hover:bg-green-700 rounded'
-                    >
-                      Approuver
-                    </button>
-                    <button onClick={() => handleReject(savant._id)} className='px-4 py-2 text-white bg-[#ba2e5f] hover:bg-red-700 rounded'>
-                      Rejeter
-                    </button>
+            {!savants || !isdata ? (
+              <div className="flex justify-center items-center h-[70vh]">
+                <ClipLoader size={40} color="#2f7062" />
+              </div>
+            ) : savants.length > 0 ? (
+              savants.map((savant) => (
+                <div key={savant._id} className='flex bg-white shadow-lg rounded-lg overflow-hidden'>
+                  <img src={`${import.meta.env.VITE_SERVER}/api/uploads/${savant.picture}`} alt="savant" className='w-42 h-64 object-cover' />
+                  <div className='p-4 flex items-center justify-between w-full'>
+                    <div>
+                      <Link to={`/savant/${savant._id}`} className="text-lg font-semibold text-blue-600 hover:underline block">
+                        {savant.name}
+                      </Link>
+                      <p className='text-sm text-gray-600 my-1'>
+                        Époque : <span className='font-medium'>{savant.epoque}</span>
+                      </p>
+                      <p className='text-sm text-gray-600'>
+                        Domaine : <span className='font-medium'>{savant.domaineExpertise}</span>
+                      </p>
+                    </div>
+                    <div className='mt-3 flex flex-col gap-2'>
+                      <button
+                        onClick={() => {
+                          setSelectedApproveId(savant._id);
+                          setShowApproveModal(true);
+                          setApproveNotes('');
+                        }}
+                        className='px-4 py-2 text-white bg-[#1f863a] hover:bg-green-700 rounded'
+                      >
+                        Approuver
+                      </button>
+                      <button onClick={() => handleReject(savant._id)} className='px-4 py-2 text-white bg-[#ba2e5f] hover:bg-red-700 rounded'>
+                        Rejeter
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))
-          ) : (
-            <p className="text-gray-500 text-center">Aucun savant en attente.</p>
-          )}
+              ))
+            ) : (
+              <p className="text-gray-500 text-center">Aucun savant en attente.</p>
+            )}
           </div>
         </div>
       </div>
