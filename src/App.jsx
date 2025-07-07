@@ -19,9 +19,10 @@ import Notfound from "./pages/Notfound";
 import SavedArticle from "./pages/SavedArticle";
 import EditProfile from "./pages/editProfile";
 import AdminStatistiques from "./pages/AdminPages/AdminStatistiques";
-
+import DeviceGuard from "./utils/DeviceGuard";
 function App() {
   return (
+    <DeviceGuard>
     <Routes>
       <Route path="/" element={<HomeRedirect />} />
       <Route path="/login" element={<Login />} />
@@ -51,6 +52,7 @@ function App() {
         <Route path="/admin_statistique" element={<AdminStatistiques />} />
       </Route>
     </Routes>
+    </DeviceGuard>
   );
 }
 

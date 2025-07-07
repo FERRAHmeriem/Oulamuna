@@ -254,7 +254,7 @@ const AddArticle = () => {
                 }} className="bg-[#193c35] text-white px-4 py-2 rounded">SUIVANT</button>
               )}
             </div>
-            <button onClick={addSection} className="mt-4 bg-blue-500 text-white px-4 py-2 rounded">Ajouter une section</button>
+            <button disabled={subStep === 0} onClick={addSection} className="mt-4 bg-blue-500 text-white px-4 py-2 rounded  disabled:opacity-50">Ajouter une section</button>
           </div>
         </div>
 
