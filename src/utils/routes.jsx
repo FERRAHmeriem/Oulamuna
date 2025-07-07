@@ -2,14 +2,6 @@ import React from "react";
 import { useSelector } from "react-redux";
 import { Navigate, Outlet } from "react-router-dom";
 import Welcome from "../pages/Welcome";
-<<<<<<< HEAD
-/**
- * 🔒 Route protégée
- * @param {boolean} adminOnly - uniquement accessible par les admins
- * @param {boolean} userOnly - uniquement accessible par les utilisateurs normaux
- */
-=======
->>>>>>> ec8cb114c15b0274fb475b95ab774fc0285f9173
 export const PrivateRoute = ({ adminOnly = false, userOnly = false }) => {
   const { currentUser } = useSelector((state) => state.user);
 
