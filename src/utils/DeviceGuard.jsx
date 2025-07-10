@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import Unsupported from '../pages/unsupported';
+import Unsupported from '../pages/Unsupported';
 
 const DeviceGuard = ({ children }) => {
   const [isSupported, setIsSupported] = useState(window.innerWidth >= 1024);
