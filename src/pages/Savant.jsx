@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import background from "../assets/savant_background.png";
 import Header from '../components/Header';
 import ArticleParSavant from '../components/ArticleParSavant';
-import { getScholarById } from '../utils/savant';
+import { getScholarById } from '../utils/Savant';
 import { ClipLoader } from 'react-spinners';
 
 function Savant() {
