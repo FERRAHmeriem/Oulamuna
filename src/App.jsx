@@ -17,7 +17,7 @@ import AdminArticles from "./pages/AdminPages/AdminArticles";
 import AdminSavant from "./pages/AdminPages/AdminSavants";
 import Notfound from "./pages/Notfound";
 import SavedArticle from "./pages/SavedArticle";
-import EditProfile from "./pages/editProfile";
+import EditProfile from "./pages/EditProfile";
 import AdminStatistiques from "./pages/AdminPages/AdminStatistiques";
 import DeviceGuard from "./utils/DeviceGuard";
 function App() {
