@@ -12,9 +12,8 @@ import uploadRouter from './routes/uploadRouter.js';
 import cors from 'cors';
 
 const app = express();
-const frontEndPoint = process.env.FRONTEND_ENDPOINT;
 app.use(cors({
-  origin: frontEndPoint, 
+  origin: 'https://oulamuna.onrender.com', 
   credentials: true 
 }));
 const server = createServer(app);
